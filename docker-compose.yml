@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  ourbin-api:
+    build: .
+    container_name: ourbin-api
+    ports:
+      - "${CUSTOM_PORT}:8000"
+    volumes:
+      # 持久化数据库文件
+      - ./data:/app/data
+
+    environment:
+      - CUSTOM_PORT=8000
+      - PYTHONUNBUFFERED=1
+      - DB_PATH=/app/data/ourbin.db
+    restart: unless-stopped
+
+volumes:
+  # 如果需要命名卷而不是绑定挂载，可以使用这个
+  # ourbin-data:
+  #   driver: local
+

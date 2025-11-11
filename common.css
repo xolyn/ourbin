@@ -1,0 +1,65 @@
+textarea{
+    /* width: 100%; */
+    max-width: 100%;
+    min-width: 100%;
+    border-radius: 5.43px;
+    border: 1px solid #ddd
+}
+
+.button_group{
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+button{
+    padding-top:.1rem !important;
+    padding-bottom:.1rem !important;
+}
+
+button:before{
+    content: attr(data-icon);
+    font-family: 'Material Symbols Outlined';
+    display: inline-block;
+    margin-right: .3rem;
+    transform: translateY(0.1em);
+}
+
+button.disabled{
+    opacity: 0.4;
+    pointer-events: none;
+    /* cursor: not-allowed; */
+}
+
+button.red{
+    background-color: red;
+    color:white;
+    border-color: red;
+}
+
+button.green{
+    background-color: green;
+    color:white;
+    border-color: green;
+}
+
+
+.icon:before{
+    content: attr(data-icon);
+    font-family: 'Material Symbols Outlined';
+    display: inline-block;
+    margin-right: .3rem;
+    transform: translateY(0.1em);
+}
+
+
+@media (max-width: 520px) {
+    body {
+        zoom: 0.7;
+    }
+}
+@media (max-width: 360px) {
+    body {
+        zoom: 0.6;
+    }
+}

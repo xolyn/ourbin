@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel='stylesheet' href='https://static.zly.vg/sample/style.css'>
+<link rel='stylesheet' href='./common.css'>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+<style>
+    #creationTime, #expirationTime{
+        font-family: monospace;
+    }
+</style>
+</head>
+<body>
+    <h1><a href='javascript:history.back()' class="icon" data-icon="arrow_circle_left"></a>
+        &nbsp;#<span id="binId"></span>
+        <a class="icon"  title="Copy bin URL" data-icon="content_copy" style="cursor: pointer;"></a>
+    </h1>
+    <div id="bin_info">
+        <p><span class="icon"  data-icon="date_range">Created: </span><span id="creationTime">1970-01-01 00:00:00</span><br>
+            <span  class="icon" data-icon="search_activity">Expires: </span><span id="expirationTime">1970-01-01 00:00:00</span></p>
+    </div>
+    <textarea name="" id="new" rows="20" placeholder=""></textarea><br>
+
+    <div class="button_group">
+        <button data-icon="copy_all" onclick="">Copy all</button> <!-- here, after display all the content fetched from db to the textarea above, you can just use the content in the textarea above, no need to fetch again. -->
+        <button data-icon="save_as" style="margin-left: auto;" class="disabled">Save edited</button> <!-- this button is only available when the bin is edited(remove disabled class when a change in the textarea is detected) -->
+        <button data-icon="delete" class="red">Void</button>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        const binId = new URLSearchParams(window.location.search).get('id');
+        let originalContent = '';
+        let binData = null;
+        
+        document.getElementById('binId').textContent = binId;
+        
+        // 格式化时间戳
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            }).replace(/\//g, '-');
+        }
+        
+        // 加载bin详情
+        async function loadBin() {
+            if (!binId) {
+                alert('无效的bin ID');
+                return;
+            }
+            
+            try {
+                const res = await fetch(`${API_BASE}/bins/${binId}`);
+                if (!res.ok) {
+                    if (res.status === 404) {
+                        alert('Bin不存在或已过期');
+                        return;
+                    }
+                    throw new Error('加载失败');
+                }
+                
+                binData = await res.json();
+                originalContent = binData.content;
+                
+                document.getElementById('creationTime').textContent = formatTimestamp(binData.creation_time);
+                // 如果过期时间大于1年，显示 "--"
+                const now = Math.floor(Date.now() / 1000);
+                const daysLeft = (binData.expiration_time - now) / (24 * 3600);
+                if (daysLeft > 365) {
+                    document.getElementById('expirationTime').textContent = 'Never';
+                } else {
+                    document.getElementById('expirationTime').textContent = formatTimestamp(binData.expiration_time);
+                }
+                document.querySelector('textarea#new').value = binData.content;
+            } catch (err) {
+                console.error('加载失败：', err);
+                alert('加载失败：' + err.message);
+            }
+        }
+        
+        // 复制URL
+        document.querySelector('a[title="Copy bin URL"]').onclick = async function() {
+            const url = window.location.href;
+            try {
+                await navigator.clipboard.writeText(url);
+                alert('URL已复制到剪贴板');
+            } catch (err) {
+                console.error('复制失败：', err);
+                alert('复制失败');
+            }
+        };
+        
+        // 复制所有内容
+        document.querySelector('button[data-icon="copy_all"]').onclick = async function() {
+            const textarea = document.querySelector('textarea#new');
+            try {
+                await navigator.clipboard.writeText(textarea.value);
+                alert('内容已复制到剪贴板');
+            } catch (err) {
+                console.error('复制失败：', err);
+                alert('复制失败');
+            }
+        };
+        
+        // 检测textarea变化
+        document.querySelector('textarea#new').addEventListener('input', function() {
+            const saveBtn = document.querySelector('button[data-icon="save_as"]');
+            if (this.value !== originalContent) {
+                saveBtn.classList.remove('disabled');
+            } else {
+                saveBtn.classList.add('disabled');
+            }
+        });
+        
+        // 保存编辑
+        document.querySelector('button[data-icon="save_as"]').onclick = async function() {
+            if (this.classList.contains('disabled')) return;
+            
+            const textarea = document.querySelector('textarea#new');
+            const content = textarea.value;
+            
+            try {
+                const res = await fetch(`${API_BASE}/bins/${binId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+                
+                if (res.ok) {
+                    originalContent = content;
+                    this.classList.add('disabled');
+                    alert('保存成功');
+                } else {
+                    alert('保存失败');
+                }
+            } catch (err) {
+                console.error('保存失败：', err);
+                alert('保存失败：' + err.message);
+            }
+        };
+        
+        // 删除bin
+        document.querySelector('button[data-icon="delete"]').onclick = async function() {
+            if (!confirm('确定要删除这个bin吗？')) return;
+            
+            try {
+                const res = await fetch(`${API_BASE}/bins/${binId}`, { method: 'DELETE' });
+                if (res.ok) {
+                    alert('删除成功');
+                    window.location.href = 'ourbin.html';
+                } else {
+                    alert('删除失败');
+                }
+            } catch (err) {
+                console.error('删除失败：', err);
+                alert('删除失败：' + err.message);
+            }
+        };
+        
+        // 页面加载时加载bin
+        window.onload = loadBin;
+    </script>
+</body>
+</html>
