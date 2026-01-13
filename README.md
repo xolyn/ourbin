@@ -16,16 +16,16 @@ A LAN clipboard project based on Python FastAPI + SQLite, supporting creation, e
 - ✅ Clean up expired bins
 - ✅ Database reset (with security confirmation)
 - ✅ RESTful API design
+- ✅ Auto-generated API documentation
 
 ### Frontend Features
-- 🪶 Zero dependency! Pure HTML+CSS.
 - 📋 Import content from clipboard
 - 🔍 Real-time search and filtering
 - 📊 Display creation time and expiration time
 - 🔄 Auto-refresh list
 - 📝 Online content editing
 - 🔗 One-click copy URL or content
-- ⏰ Expiration time display
+- ⏰ Expiration time display (shows "--" for bins over 1 year)
 
 ## Tech Stack
 
@@ -183,7 +183,7 @@ Deletes all records where `expiration_time <= current_time`.
 DELETE /api/bins/reset
 ```
 
-⚠️ **Warning**: This operation will delete all data (`TRUNCATE TABLE`)!
+⚠️ **Warning**: This operation will delete all data!
 
 ### Health Check
 ```http
@@ -287,5 +287,4 @@ MIT License
 ## Contributing
 
 Issues and Pull Requests are welcome!
-
 

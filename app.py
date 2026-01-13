@@ -7,7 +7,7 @@ import uuid
 import os
 from typing import List, Optional
 
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.2.2"
 PORT=8000
 
 app = FastAPI(title="OurBin API", version=APP_VERSION)

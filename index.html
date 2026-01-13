@@ -5,7 +5,6 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0'>
 <link rel='stylesheet' href='https://static.zly.vg/sample/style.css'>
 <link rel='stylesheet' href='./common.css'>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 <title>Document</title>
 <style>
 .bin{
@@ -42,11 +41,11 @@
 </style>
 </head>
 <body>
-<h1>OurBin<sup ondblclick="hd.toggleAttribute('hidden')"><small>v</small><small id='version'>1.0.1</small></sup></h1>
+<h1>OurBin<sup ondblclick="hd.toggleAttribute('hidden')"><small>v</small><small id='version'></small></sup></h1>
 <h2>New</h2>
 </div>
 <div id="new">
-    <textarea name="" id="new" rows="5" placeholder="Your pasta here..."></textarea><br>
+    <textarea name="" id="new" rows="5" placeholder="Your content here..."></textarea><br>
     <div class="button_group">
         <button data-icon="content_paste_go" onclick="importFromClipboard()">Import from clipboard</button>
         <!-- <span style="margin-left: auto;">Expiration:</span> -->
@@ -73,6 +72,7 @@
         <input type="file" id="file_input" name="file_input">
     </div> -->
 </div>
+<!-- <hr class="sep" style="margin: 5dvh 0;"></hr> -->
 <h2>Existing (<span id="selected_bins_num" hidden>0</span><span id="total_bins_count">0</span>)</h2>
 <div id="sort">
     <!-- <button data-icon="more_timearrow_upward" onclick="sortByCreationTime()">Sort by creation time</button>
@@ -82,7 +82,7 @@
         <option value="creation_time" selected>Creation time</option>
         <option value="expiration_time">Expiration time</option>
     </select>
-    <select name="" id="sort_order">
+    <select name="" id="sort_order" style="margin: .5rem 0">
         <option value="desc" selected>Descending</option>
         <option value="asc">Ascending</option>
     </select>
@@ -114,6 +114,36 @@ try {
 }
 };
 
+// 全局Ctrl+V监听
+document.addEventListener('keydown', async function(e) {
+    // 检查是否是Ctrl+V（Mac上是Cmd+V）
+    if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+        // 检查当前焦点是否在输入框或文本框中
+        const activeElement = document.activeElement;
+        const isInputFocused = activeElement && (
+            activeElement.tagName === 'INPUT' ||
+            activeElement.tagName === 'TEXTAREA' ||
+            activeElement.isContentEditable
+        );
+        
+        // 如果不在输入框中，粘贴到textarea#new
+        if (!isInputFocused) {
+            e.preventDefault();
+            try {
+                const text = await navigator.clipboard.readText();
+                const textarea = document.querySelector('textarea#new');
+                if (textarea) {
+                    textarea.value = text;
+                    textarea.focus();
+                }
+            } catch (err) {
+                console.error('读取剪贴板失败：', err);
+                // 不显示alert，避免干扰用户体验
+            }
+        }
+    }
+});
+
 // 获取版本号
 async function loadVersion() {
     try {
@@ -130,6 +160,31 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// 检测内容是否为单个URL
+function isSingleUrl(content) {
+    const trimmed = content.trim();
+    if (!trimmed) return null;
+    
+    // 检查是否只包含一个"词"（没有空格、换行等）
+    if (trimmed.includes(' ') || trimmed.includes('\n') || trimmed.includes('\r')) {
+        return null; // 包含空格或换行，不是单个URL
+    }
+    
+    // URL正则：支持http://、https://或直接域名
+    // 匹配：http://example.com, https://example.com, example.com, www.example.com/path
+    const urlWithProtocol = /^https?:\/\/[\w\.-]+(\.[\w\.-]+)+([\/\w \.\-]*)*\/?$/i;
+    const urlWithoutProtocol = /^[\w\.-]+(\.[\w\.-]+)+([\/\w \.\-]*)*\/?$/i;
+    
+    // 检查是否符合URL格式
+    if (urlWithProtocol.test(trimmed)) {
+        return trimmed; // 已有协议前缀
+    } else if (urlWithoutProtocol.test(trimmed)) {
+        return 'http://' + trimmed; 
+    }
+    
+    return null; // 不符合URL格式
 }
 
 // 格式化时间剩余
@@ -156,12 +211,36 @@ async function refresh() {
         const binsContainer = document.getElementById('bins');
         binsContainer.innerHTML = '';
         
-        bins.forEach(bin => {
+        // 并行获取所有bin的完整内容以判断是否为URL
+        const binContents = await Promise.all(
+            bins.map(async bin => {
+                try {
+                    const contentRes = await fetch(`${API_BASE}/bins/${bin.uuid}`);
+                    if (contentRes.ok) {
+                        const binData = await contentRes.json();
+                        return { uuid: bin.uuid, content: binData.content, ...bin };
+                    }
+                } catch (err) {
+                    console.error(`获取bin ${bin.uuid} 内容失败：`, err);
+                }
+                return { uuid: bin.uuid, content: null, ...bin };
+            })
+        );
+        
+        binContents.forEach(bin => {
             const binDiv = document.createElement('div');
             binDiv.className = 'bin';
             binDiv.dataset.id = bin.uuid;
             
             const timeLeft = formatTimeLeft(bin.expiration_time);
+            const url = bin.content ? isSingleUrl(bin.content) : null;
+            
+            // 构建按钮组HTML
+            let buttonsHtml = `<button data-icon="copy_all" onclick="copyBinContent('${bin.uuid}')">Copy all</button>`;
+            if (url) {
+                buttonsHtml += `<button data-icon="open_in_new" onclick="window.open('${escapeHtml(url)}', '_blank')">Go</button>`;
+            }
+            buttonsHtml += `<button style="margin-left:auto" data-icon="delete" class="red" onclick="deleteBin('${bin.uuid}')">Void</button>`;
             
             binDiv.innerHTML = `
                 <div style="display: flex;">
@@ -170,9 +249,8 @@ async function refresh() {
                     <span class="icon" style="font-size: small; margin-left: auto;" data-icon="search_activity">${timeLeft}</span>
                 </div>
                 <div class="binPreview" style="padding: .5rem 0">${escapeHtml(bin.preview)}</div>
-                <div class="button_group">
-                    <button data-icon="copy_all" onclick="copyBinContent('${bin.uuid}')">Copy all</button>
-                    <button data-icon="delete" class="red" onclick="deleteBin('${bin.uuid}')">Void</button>
+                <div class="button_group" style="padding: display:flex; gap:.5rem">
+                    ${buttonsHtml}
                 </div>
             `;
             binsContainer.appendChild(binDiv);
@@ -201,7 +279,19 @@ function updateButtonStates() {
     const selected = document.querySelectorAll('.bin.selected');
     const renewBtn = document.getElementById('renew');
     const deleteBtn = document.getElementById('delete');
+    const selectBtn = document.getElementById('select');
     const selectedNum = document.getElementById('selected_bins_num');
+    const binsContainer = document.getElementById('bins');
+    
+    // 检查#bins是否为空
+    const isEmpty = binsContainer.children.length === 0;
+    
+    // 更新Select all按钮状态
+    if (isEmpty) {
+        selectBtn.classList.add('disabled');
+    } else {
+        selectBtn.classList.remove('disabled');
+    }
     
     // 更新选中数量
     selectedNum.textContent = selected.length;
@@ -220,6 +310,11 @@ function updateButtonStates() {
 
 // 全选/取消全选
 document.getElementById('select').onclick = function() {
+    // 如果按钮被禁用，直接返回
+    if (this.classList.contains('disabled')) {
+        return;
+    }
+    
     const isSelectAll = this.textContent.includes('Select all');
     const checkboxes = document.querySelectorAll('.bin input[type="checkbox"]');
     checkboxes.forEach(cb => {
@@ -343,7 +438,7 @@ document.getElementById('renew').onclick = async function() {
 
 // 清理已过期的bin
 async function clearBins() {
-    if (!confirm('确定要清理所有已过期的bin吗？')) return;
+    if (!confirm('确定要清理所有已过期的bin吗？此操作不影响前端显示，但会删除数据库中的记录。')) return;
     
     try {
         const res = await fetch(`${API_BASE}/bins/cleanup`, { method: 'DELETE' });
@@ -399,11 +494,20 @@ async function resetDB() {
 document.getElementById('sort_by').addEventListener('change', refresh);
 document.getElementById('sort_order').addEventListener('change', refresh);
 
-// 页面加载时初始化
-window.onload = function() {
-    loadVersion();
-    refresh();
-};
+// init page to refresh
+let initTimer = null;
+function initPage() {
+    if (initTimer) {
+        clearTimeout(initTimer);
+    }
+    initTimer = setTimeout(function() {
+        loadVersion();
+        refresh();
+        initTimer = null;
+    }, 50);
+}
+window.addEventListener('pageshow', initPage);
+window.addEventListener('DOMContentLoaded', initPage);
 </script>
 </body>
 </html>
