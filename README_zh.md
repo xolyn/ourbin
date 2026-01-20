@@ -1,6 +1,6 @@
 # OurBin - 内网剪贴板
 
-基于 Python FastAPI + SQLite 的内网剪贴板项目，支持创建、编辑、管理和分享文本内容。
+> 一个基于 Python FastAPI + SQLite 的内网剪贴板项目，支持创建、编辑、管理和分享文本内容。
 ![](func.png)
 
 ## 功能特性
