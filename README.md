@@ -9,7 +9,7 @@ A LAN clipboard project based on Python FastAPI + SQLite, supporting creation, e
 ### Core Features
 - ✅ Create clipboard content (supports custom expiration time, from minutes to permanent)
 - ✅ Access and edit clipboard content via UUID
-- ✅ Soft delete functionality (sets expiration time to 1970)
+- ✅ Soft delete functionality
 - ✅ List all valid clipboard content
 - ✅ Batch operations (select, delete, renew)
 - ✅ Sorting functionality (by creation time, expiration time)
@@ -25,7 +25,7 @@ A LAN clipboard project based on Python FastAPI + SQLite, supporting creation, e
 - 🔄 Auto-refresh list
 - 📝 Online content editing
 - 🔗 One-click copy URL or content
-- ⏰ Expiration time display (shows "--" for bins over 1 year)
+- ⏰ Expiration time display
 
 ## Tech Stack
 

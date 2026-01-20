@@ -3,170 +3,327 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel='stylesheet' href='https://static.zly.vg/sample/style.css'>
-<link rel='stylesheet' href='./common.css'>
-<style>
-    #creationTime, #expirationTime{
-        font-family: monospace;
-    }
-</style>
+    <link rel="shortcut icon" href="https://img.icons8.com/parakeet-filled/48/box.png" type="image/x-icon">
+    <title>Bin</title>
+    <style>
+        @font-face {
+            font-family: 'Inter';
+            src: url('https://fonts.zly.vg/inter/InterLatin.woff2');
+        }
+
+        /* Modern Reset & Variables (Matching index-2.html) */
+        :root {
+            --bg-color: #FAFAFA;
+            --card-bg: #FFFFFF;
+            --text-main: #1A1A1A;
+            --text-secondary: #666666;
+            --border-color: #E5E5E5;
+            --primary-color: #1A1A1A;
+            --primary-hover: #333333;
+            --danger-color: #DC2626;
+            --radius-md: 8px;
+            --radius-sm: 4px;
+            --font-main: 'Inter', sans-serif;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            font-size: 0.875rem; /* 14px */
+            zoom:.9;
+        }
+
+        /* Material Symbols Font */
+        @font-face {
+            font-family: 'Material Symbols Rounded';
+            src: url("./msr.woff2");
+            font-display: block;
+        }
+
+        /* Icon Helper */
+        [data-icon]:before {
+            content: attr(data-icon);
+            font-family: 'Material Symbols Rounded';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 1.2em;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            vertical-align: middle;
+            margin-right: 0.3em;
+        }
+
+        /* Layout */
+        .app-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: -0.025em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+
+        .copy-url-btn {
+            text-decoration: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .copy-url-btn:hover {
+            color: var(--text-main);
+        }
+
+        /* Metadata Card */
+        .meta-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        #creationTime, #expirationTime {
+            /* font-family: monospace; */
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        /* Editor Section */
+        .editor-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            flex-grow: 1;
+        }
+
+        textarea#new {
+            width: 100%;
+            min-height: 400px; /* Taller for detail view */
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-family: monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+            background: #FAFAFA;
+        }
+
+        textarea#new:focus {
+            border-color: var(--text-main);
+            background: #FFF;
+        }
+
+        /* Buttons */
+        .button_group {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.35rem 0.8rem;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-main);
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #F5F5F5;
+            border-color: #D4D4D4;
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+
+        button.danger, button.red {
+            color: var(--danger-color);
+            border-color: rgba(220, 38, 38, 0.2);
+        }
+        
+        button.danger:hover:not(:disabled), button.red:hover:not(:disabled) {
+            background-color: #FEF2F2;
+            border-color: var(--danger-color);
+        }
+
+        button.disabled, button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        
+        /* Utility */
+        .spacer {
+            margin-left: auto;
+        }
+        
+        .icon {
+            font-family: 'Material Symbols Rounded';
+            font-style: normal;
+            display: inline-block;
+            vertical-align: middle;
+            line-height: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .app-container {
+                padding: 1rem;
+                gap: 1rem;
+            }
+
+            .meta-card {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .button_group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .spacer {
+                margin-left: 0;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1><a href='javascript:history.back()' class="icon" data-icon="arrow_circle_left"></a>
-        &nbsp;#<span id="binId"></span>
-        <a class="icon"  title="Copy bin URL" data-icon="content_copy" style="cursor: pointer;"></a>
-    </h1>
-    <div id="bin_info">
-        <p><span class="icon"  data-icon="date_range">Created: </span><span id="creationTime">1970-01-01 00:00:00</span><br>
-            <span  class="icon" data-icon="search_activity">Expires: </span><span id="expirationTime">1970-01-01 00:00:00</span></p>
-    </div>
-    <textarea name="" id="new" rows="20" placeholder=""></textarea><br>
 
-    <div class="button_group">
-        <button data-icon="copy_all" onclick="">Copy all</button> <!-- here, after display all the content fetched from db to the textarea above, you can just use the content in the textarea above, no need to fetch again. -->
-        <button data-icon="save_as" style="margin-left: auto;" class="disabled">Save edited</button> <!-- this button is only available when the bin is edited(remove disabled class when a change in the textarea is detected) -->
-        <button data-icon="delete" class="red">Void</button>
+<div class="app-container">
+    <header>
+        <h1>
+            <a href='javascript:history.back()' class="back-btn icon" data-icon="arrow_circle_left" title="Back"></a>
+            <span style="font-family: monospace;">#<span id="binId">...</span></span>
+            <a class="copy-url-btn icon" title="Copy bin URL" data-icon="content_copy" style="font-size: 0.8em; margin-left: 0.2em;"></a>
+            
+        </h1>
+    </header>
+
+    <div class="meta-card" id="bin_info">
+        <div class="meta-item">
+            <span class="icon" data-icon="date_range" style="margin-right: 0.4em;"></span>
+            Created: &nbsp;<span id="creationTime">...</span>
+        </div>
+        
+        <div class="meta-item">
+            <span class="icon" data-icon="search_activity" style="margin-right: 0.4em;"></span>
+            Expires: &nbsp;<span id="expirationTime">...</span>
+        </div>
     </div>
-    
-    <script>
-        const API_BASE = 'http://localhost:8000/api';
-        const binId = new URLSearchParams(window.location.search).get('id');
-        let originalContent = '';
-        let binData = null;
+
+    <div class="editor-card">
+        <textarea id="new" placeholder="Loading content..."></textarea>
         
-        document.getElementById('binId').textContent = binId;
-        
-        // 格式化时间戳
-        function formatTimestamp(timestamp) {
-            const date = new Date(timestamp * 1000);
-            return date.toLocaleString('zh-CN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            }).replace(/\//g, '-');
-        }
-        
-        // 加载bin详情
-        async function loadBin() {
-            if (!binId) {
-                alert('无效的bin ID');
-                return;
-            }
+        <div class="button_group">
+            <button data-icon="copy_all" onclick="copyContent()">Copy all</button> 
+            <button data-icon="article_shortcut" class="raw-btn" id="viewRawBtn" title="View Raw" onclick="viewRaw()">Raw</button> 
             
-            try {
-                const res = await fetch(`${API_BASE}/bins/${binId}`);
-                if (!res.ok) {
-                    if (res.status === 404) {
-                        alert('Bin不存在或已过期');
-                        return;
-                    }
-                    throw new Error('加载失败');
-                }
-                
-                binData = await res.json();
-                originalContent = binData.content;
-                
-                document.getElementById('creationTime').textContent = formatTimestamp(binData.creation_time);
-                // 如果过期时间大于1年，显示 "--"
-                const now = Math.floor(Date.now() / 1000);
-                const daysLeft = (binData.expiration_time - now) / (24 * 3600);
-                if (daysLeft > 365) {
-                    document.getElementById('expirationTime').textContent = 'Never';
-                } else {
-                    document.getElementById('expirationTime').textContent = formatTimestamp(binData.expiration_time);
-                }
-                document.querySelector('textarea#new').value = binData.content;
-            } catch (err) {
-                console.error('加载失败：', err);
-                alert('加载失败：' + err.message);
-            }
-        }
-        
-        // 复制URL
-        document.querySelector('a[title="Copy bin URL"]').onclick = async function() {
-            const url = window.location.href;
-            try {
-                await navigator.clipboard.writeText(url);
-                alert('URL已复制到剪贴板');
-            } catch (err) {
-                console.error('复制失败：', err);
-                alert('复制失败');
-            }
-        };
-        
-        // 复制所有内容
-        document.querySelector('button[data-icon="copy_all"]').onclick = async function() {
-            const textarea = document.querySelector('textarea#new');
-            try {
-                await navigator.clipboard.writeText(textarea.value);
-                alert('内容已复制到剪贴板');
-            } catch (err) {
-                console.error('复制失败：', err);
-                alert('复制失败');
-            }
-        };
-        
-        // 检测textarea变化
-        document.querySelector('textarea#new').addEventListener('input', function() {
-            const saveBtn = document.querySelector('button[data-icon="save_as"]');
-            if (this.value !== originalContent) {
-                saveBtn.classList.remove('disabled');
-            } else {
-                saveBtn.classList.add('disabled');
-            }
+            <button data-icon="save_as" class="disabled spacer" id="save_btn">Save edited</button>
+            
+            <button data-icon="delete" class="red">Void</button>
+        </div>
+    </div>
+</div>
+
+<footer style="background-color: var(--bg-color); position: fixed; bottom: 0; padding: .5rem 0; width: 100%; left:0; box-sizing: border-box; text-align: center; font-size: x-small;">
+    <a href="http://github.com/xolyn/ourbin">OurBin</a> is a opensource LAN clipboard, powered by <a href="https://zhoulingyu.net" target="_blank">Uygnil</a>
+</footer>
+
+<script src="bin.js"></script>
+
+<script>
+    function copyContent() {
+        const textarea = document.getElementById('new');
+        textarea.select();
+        navigator.clipboard.writeText(textarea.value).then(() => {
+            // Optional: visual feedback
+            const btn = document.querySelector('button[data-icon="copy_all"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Copied!';
+            setTimeout(() => btn.innerHTML = originalText, 2000);
         });
-        
-        // 保存编辑
-        document.querySelector('button[data-icon="save_as"]').onclick = async function() {
-            if (this.classList.contains('disabled')) return;
-            
-            const textarea = document.querySelector('textarea#new');
-            const content = textarea.value;
-            
-            try {
-                const res = await fetch(`${API_BASE}/bins/${binId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content })
-                });
-                
-                if (res.ok) {
-                    originalContent = content;
-                    this.classList.add('disabled');
-                    alert('保存成功');
-                } else {
-                    alert('保存失败');
-                }
-            } catch (err) {
-                console.error('保存失败：', err);
-                alert('保存失败：' + err.message);
-            }
-        };
-        
-        // 删除bin
-        document.querySelector('button[data-icon="delete"]').onclick = async function() {
-            if (!confirm('确定要删除这个bin吗？')) return;
-            
-            try {
-                const res = await fetch(`${API_BASE}/bins/${binId}`, { method: 'DELETE' });
-                if (res.ok) {
-                    alert('删除成功');
-                    window.location.href = 'ourbin.html';
-                } else {
-                    alert('删除失败');
-                }
-            } catch (err) {
-                console.error('删除失败：', err);
-                alert('删除失败：' + err.message);
-            }
-        };
-        
-        // 页面加载时加载bin
-        window.onload = loadBin;
-    </script>
+    }
+    
+    // Enable save button on input
+    document.getElementById('new').addEventListener('input', function() {
+        const saveBtn = document.querySelector('button[data-icon="save_as"]');
+        if (saveBtn) saveBtn.classList.remove('disabled');
+    });
+</script>
 </body>
 </html>

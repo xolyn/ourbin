@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 import sqlite3
@@ -7,7 +8,9 @@ import uuid
 import os
 from typing import List, Optional
 
-APP_VERSION = "1.2.2"
+import re
+
+APP_VERSION = "1.3.1"
 PORT=8000
 
 app = FastAPI(title="OurBin API", version=APP_VERSION)
@@ -43,14 +46,19 @@ class BinListItem(BaseModel):
     uuid: str
     creation_time: int
     expiration_time: int
-    preview: str
+    content: str
+    truncated: bool = False
 
 class BinRenew(BaseModel):
     uuids: List[str]  # UUID列表
 
+class HealthResponse(BaseModel):
+    status: str
+    version: str
+
 # 初始化数据库
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH) # .db file will be created if not exists
     cursor = conn.cursor()
     cursor.execute(f'''
         CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
@@ -64,6 +72,9 @@ def init_db():
     ''')
     conn.commit()
     conn.close()
+
+# 确保在应用启动时初始化数据库（适用于 uvicorn 启动方式）
+app.add_event_handler("startup", init_db)
 
 # 获取数据库连接
 def get_db():
@@ -259,16 +270,42 @@ async def list_bins(
     conn.close()
     
     bins = []
+    
+    # URL 匹配正则（简单的）
+    url_pattern = re.compile(r'^https?:\/\/[\w\.-]+(\.[\w\.-]+)+([\/\w \.\-]*)*\/?$', re.IGNORECASE)
+    url_without_protocol_pattern = re.compile(r'^[\w\.-]+(\.[\w\.-]+)+([\/\w \.\-]*)*\/?$', re.IGNORECASE)
+
     for row in rows:
-        preview = row['content'][:50]
-        if len(row['content']) > 50:
-            preview += "..."
+        content = row['content']
+        trimmed_content = content.strip()
+        
+        # 默认值
+        final_content = content
+        truncated = False
+        
+        # 检查是否为URL (完整逻辑)
+        is_url = False
+        # 排除包含空格换行且长度不太离谱的
+        if not (' ' in trimmed_content or '\n' in trimmed_content or '\r' in trimmed_content) and len(trimmed_content) < 2048:
+            if url_pattern.match(trimmed_content):
+                is_url = True
+                final_content = trimmed_content # URL 返回完整内容
+            elif url_without_protocol_pattern.match(trimmed_content):
+                is_url = True
+                final_content = 'http://' + trimmed_content # URL 返回完整内容(带协议)
+        
+        # 如果不是URL，则截断
+        if not is_url:
+            if len(content) > 50:
+                final_content = content[:50]
+                truncated = True
         
         bins.append(BinListItem(
             uuid=row['uuid'],
             creation_time=row['creation_time'],
             expiration_time=row['expiration_time'],
-            preview=preview
+            content=final_content,
+            truncated=truncated
         ))
     
     return bins
@@ -298,7 +335,8 @@ async def reset_database():
     cursor = conn.cursor()
     
     # 删除所有数据
-    cursor.execute(f'TRUNCATE TABLE {TABLE_NAME}')
+    # SQLite 不支持 TRUNCATE，使用 DELETE FROM
+    cursor.execute(f'DELETE FROM {TABLE_NAME}')
     
     deleted_count = cursor.rowcount
     conn.commit()
@@ -307,9 +345,28 @@ async def reset_database():
     return {"message": "Database reset successfully", "deleted_count": deleted_count}
 
 # 健康检查
-@app.get("/api/health")
+@app.get("/api/health", response_model=HealthResponse)
 async def health_check():
     return {"status": "healthy", "version": APP_VERSION}
+
+# 获取bin纯文本 (Raw View)
+@app.get("/raw/{bin_uuid}", response_class=PlainTextResponse)
+async def get_raw_bin(bin_uuid: str):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT content
+        FROM bins
+        WHERE uuid = ? AND expiration_time > ?
+    ''', (bin_uuid, int(datetime.now().timestamp())))
+    
+    row = cursor.fetchone()
+    conn.close()
+    
+    if not row:
+        raise HTTPException(status_code=404, detail="Not found or expired")
+    
+    return row['content']
 
 if __name__ == "__main__":
     init_db()
