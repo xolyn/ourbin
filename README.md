@@ -1,5 +1,5 @@
 # OurBin - LAN Clipboard
-
+![](func.png)
 A LAN clipboard project based on Python FastAPI + SQLite, supporting creation, editing, management, and sharing of text content.
 
 [【简体中文】](README_zh.md)
@@ -287,4 +287,5 @@ MIT License
 ## Contributing
 
 Issues and Pull Requests are welcome!
+
 
