@@ -3,547 +3,359 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OurBin — A calm LAN clipboard</title>
+    <meta name="description" content="OurBin is a clean LAN clipboard for sharing text quickly across your local network. Simple, searchable, and easy to manage.">
     <link rel="shortcut icon" href="https://img.icons8.com/parakeet-filled/48/box.png" type="image/x-icon">
-    <title>OurBin</title>
-    <style>
-        @font-face {
-            font-family: 'Inter';
-            src: url('https://fonts.zly.vg/inter/InterLatin.woff2');
-        }
-        /* Modern Reset & Variables */
-        :root {
-            --bg-color: #FAFAFA;
-            --card-bg: #FFFFFF;
-            --text-main: #1A1A1A;
-            --text-secondary: #666666;
-            --border-color: #E5E5E5;
-            --primary-color: #1A1A1A;
-            --primary-hover: #333333;
-            --danger-color: #DC2626;
-            --radius-md: 8px;
-            --radius-sm: 4px;
-            --font-main: 'Inter', sans-serif;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        }
-
-        * { box-sizing: border-box; }
-        
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: var(--font-main);
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
-            zoom:.9;
-        }
-
-        /* Material Symbols Font */
-        @font-face {
-            font-family: 'Material Symbols Rounded';
-            src: url("./msr.woff2");
-            font-display: block;
-        }
-
-        /* Icon Helper */
-        [data-icon]:before {
-            content: attr(data-icon);
-            font-family: 'Material Symbols Rounded';
-            font-weight: normal;
-            font-style: normal;
-            font-size: 1.2em;
-            line-height: 1;
-            letter-spacing: normal;
-            text-transform: none;
-            display: inline-block;
-            white-space: nowrap;
-            word-wrap: normal;
-            direction: ltr;
-            vertical-align: middle;
-            margin-right: 0.3em;
-        }
-
-        .icon-rotate:before{
-            animation: rotate 1s cubic-bezier(0.68, -0.20, 0.265, 1.55) infinite;
-        }
-
-        @keyframes rotate {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        /* Layout */
-        .app-container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        /* Header */
-        header {
-            display: flex;
-            align-items: baseline;
-            gap: 0.5rem;
-        }
-        
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 600;
-            margin: 0;
-            letter-spacing: -0.025em;
-        }
-
-        .version-tag {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            font-family: monospace;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        /* Editor Section */
-        .editor-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-sm);
-            padding: 1.25rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        textarea#new {
-            width: 100%;
-            min-height: 150px;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-sm);
-            font-family: monospace;
-            font-size: 0.9rem;
-            resize: vertical;
-            outline: none;
-            transition: border-color 0.2s;
-            background: #FAFAFA;
-        }
-
-        textarea#new:focus {
-            border-color: var(--text-main);
-            background: #FFF;
-        }
-
-        .editor-toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-        }
-
-        .editor-actions {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        /* Controls */
-        select {
-            padding: 0.35rem 2rem 0.35rem 0.6rem;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-sm);
-            background-color: var(--card-bg);
-            font-family: inherit;
-            font-size: 0.85rem;
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23666666'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 0.5rem center;
-            background-size: 1em;
-            color: var(--text-main);
-        }
-        
-        select:focus {
-            outline: 2px solid var(--border-color);
-            outline-offset: 1px;
-        }
-
-        button {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.35rem 0.8rem;
-            border: 1px solid var(--border-color);
-            background-color: var(--card-bg);
-            border-radius: var(--radius-sm);
-            font-family: var(--font-main);
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: var(--text-main);
-        }
-
-        button:hover:not(:disabled) {
-            background-color: #F5F5F5;
-            border-color: #D4D4D4;
-        }
-
-        button:active:not(:disabled) {
-            transform: translateY(1px);
-        }
-
-        button.primary {
-            background-color: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-
-        button.primary:hover:not(:disabled) {
-            background-color: var(--primary-hover);
-        }
-
-        button.danger, button.red {
-            color: var(--danger-color);
-            border-color: rgba(220, 38, 38, 0.2);
-        }
-        
-        button.danger:hover:not(:disabled), button.red:hover:not(:disabled) {
-            background-color: #FEF2F2;
-            border-color: var(--danger-color);
-        }
-
-        button.disabled, button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-
-        /* Bin List Header */
-        .list-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 0.75rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .list-title {
-            font-weight: 600;
-            font-size: 1rem;
-            display: flex;
-            align-items: baseline;
-            gap: 0.5rem;
-        }
-        
-        .list-title span {
-            font-weight: normal;
-            color: var(--text-secondary);
-            font-size: 0.9em;
-        }
-
-        /* Slash for counts */
-        #selected_bins_num::after {
-            content: ' / ';
-        }
-
-        .sort-controls {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        /* Action Toolbar */
-        .list-toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .bulk-actions {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        /* Bins Grid */
-        #bins {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1rem;
-        }
-        
-        #bins:empty::before {
-             content: 'No bins created yet.';
-             display: block;
-             width: 100%;
-             grid-column: 1 / -1;
-             text-align: center;
-             padding: 3rem;
-             color: var(--text-secondary);
-             font-style: italic;
-        }
-
-        /* Styles for generated bin items */
-        .bin {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            transition: box-shadow 0.2s, border-color 0.2s;
-        }
-
-        .bin:hover {
-            box-shadow: var(--shadow-md);
-            border-color: #D4D4D4;
-        }
-
-        .bin.selected {
-            border-color: var(--text-main);
-            background-color: #FAFAFA;
-            box-shadow: 0 0 0 1px var(--text-main);
-        }
-
-        /* Overriding inline styles from JS */
-        .bin > div:first-child {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .binId {
-            font-family: monospace;
-            font-weight: 600;
-            text-decoration: none;
-            color: var(--text-main);
-            font-size: 0.85rem;
-            background: #F0F0F0;
-            padding: 0.1rem 0.4rem;
-            border-radius: 4px;
-        }
-        
-        .binId:hover {
-            text-decoration: underline;
-        }
-        
-        .binPreview {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 4;
-            -webkit-box-orient: vertical;
-            min-height: 3rem;
-            word-break: break-all;
-            background: #FAFAFA;
-            padding: 0.5rem !important; /* Force nice padding */
-            border-radius: 4px;
-        }
-
-        .bin .button_group {
-            margin-top: auto;
-            display: flex !important; /* Force flex */
-            gap: 0.5rem;
-            padding: 0 !important; /* Override invalid padding */
-        }
-        
-        .bin button {
-            font-size: 0.75rem;
-            padding: 0.3rem 0.6rem;
-        }
-        
-        .icon {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            background: none !important; /* Reset any potential bg */
-        }
-
-        /* Danger Zone */
-        #hd {
-            margin-top: 3rem;
-            padding: 1.5rem;
-            border: 1px dashed var(--danger-color);
-            border-radius: var(--radius-md);
-            background-color: #FEF2F2;
-        }
-        
-        #hd h2 {
-            margin-top: 0;
-            color: var(--danger-color);
-            font-size: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        /* Checkbox styling */
-        input[type="checkbox"] {
-            width: 1rem;
-            height: 1rem;
-            cursor: pointer;
-            accent-color: var(--text-main);
-        }
-
-        .binPreview.truncated::after {
-            content: '...';
-            color: var(--text-secondary);
-        }
-
-        /* Responsive */
-        @media (max-width: 600px) {
-            .app-container {
-                padding: 1rem;
-                gap: 1.5rem;
-            }
-
-            .editor-toolbar {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .editor-actions, select#expiration {
-                width: 100%;
-            }
-            
-            .editor-actions select {
-                flex-grow: 1;
-            }
-
-            /* Stack header items on small screens */
-            .list-header {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 0.75rem;
-            }
-            
-            .sort-controls {
-                width: 100%;
-            }
-            .sort-controls select {
-                flex: 1;
-            }
-
-            /* Stack toolbar */
-            .list-toolbar {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            /* Bulk actions grid */
-            .bulk-actions {
-                display: grid;
-                grid-template-columns: 1fr 1fr 1fr;
-            }
-
-            #bins {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="./landing.css">
 </head>
 <body>
+    <div class="page-shell">
+        <div class="ambient" aria-hidden="true"></div>
 
-<div class="app-container">
-    <header>
-        <h1>OurBin</h1>
-        <sup class="version-tag" ondblclick="document.getElementById('hd').toggleAttribute('hidden')">
-            v<span id="version">...</span>
-        </sup>
-    </header>
-
-    <div class="editor-card">
-        <textarea id="new" placeholder="Type or paste content here..."></textarea>
-        <div class="editor-toolbar">
-            <div class="editor-actions">
-                <button onclick="importFromClipboard()" data-icon="content_paste_go">Paste</button>
-                <select id="expiration">
-                    <option disabled>Expiration</option>
-                    <option value="1">1 min</option>
-                    <option value="5">5 min</option>
-                    <option value="10">10 min</option>
-                    <option value="30">30 min</option>
-                    <option value="60">1 hr</option>
-                    <option value="120">2 hr</option>
-                    <option value="240">4 hr</option>
-                    <option value="480">8 hr</option>
-                    <option value="1440" selected>1 d</option>
-                    <option value="2880">2 d</option>
-                    <option value="10080">1 w</option>
-                    <option value="-1">Never</option>
-                </select>
+        <nav class="site-nav">
+            <div class="site-nav__inner">
+                <a class="brand-lockup" href="#top" aria-label="OurBin home">
+                    <span class="brand-mark"><i class="bi bi-box-seam"></i></span>
+                    <span>OurBin</span>
+                </a>
+                <button class="menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="siteMenu" aria-label="Toggle navigation">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="nav-links" id="siteMenu">
+                    <a class="nav-link" href="#overview">Overview</a>
+                    <a class="nav-link" href="#features">Features</a>
+                    <a class="nav-link" href="#workflow">Flow</a>
+                    <a class="nav-link" href="#demo">Demo</a>
+                    <a class="nav-link" href="http://github.com/xolyn/ourbin" target="_blank" rel="noreferrer">GitHub</a>
+                </div>
             </div>
-            <button class="primary" data-icon="order_approve">Create Bin</button>
-        </div>
+        </nav>
+
+        <main id="top">
+            <section class="section hero">
+                <div class="section-shell">
+                    <div class="hero-grid">
+                        <article class="hero-copy reveal">
+                            <span class="eyebrow"><i class="bi bi-broadcast"></i> A local-first clipboard for fast sharing</span>
+                            <h1>Paste once. Open anywhere on your LAN.</h1>
+                            <p>
+                                OurBin turns temporary text into a clean shared link. It is made for notes, snippets,
+                                URLs, and anything you want to move between devices without extra friction.
+                            </p>
+                            <div class="hero-actions">
+                                <a class="button-primary" href="#features">
+                                    <i class="bi bi-arrow-down-right-circle"></i>
+                                    <span>See features</span>
+                                </a>
+                                <a class="button-secondary" href="#demo">
+                                    <i class="bi bi-window"></i>
+                                    <span>View demo</span>
+                                </a>
+                            </div>
+                            <div class="hero-metrics">
+                                <div class="metric">
+                                    <strong>Fast</strong>
+                                    <span>Designed for quick sharing</span>
+                                </div>
+                                <div class="metric">
+                                    <strong>Clean</strong>
+                                    <span>Simple list and detail flow</span>
+                                </div>
+                                <div class="metric">
+                                    <strong>Local</strong>
+                                    <span>Built for your network</span>
+                                </div>
+                            </div>
+                        </article>
+
+                        <aside class="hero-panel reveal" data-parallax="-0.05">
+                            <div class="hero-panel__chrome" aria-hidden="true">
+                                <span></span><span></span><span></span>
+                            </div>
+                            <div class="hero-panel__body">
+                                <div class="command-card">
+                                    <code># Meeting notes
+
+Deploy window: 16:30
+Rollback owner: Kevin
+Room: 3F / board 2</code>
+                                </div>
+                                <div class="signal-card">
+                                    <div class="signal-row">
+                                        <div>
+                                            <strong>Share temporary text</strong>
+                                            <small>From quick snippets to day-long notes.</small>
+                                        </div>
+                                        <span class="signal-pill is-blue"><i class="bi bi-hourglass-split"></i> Timed</span>
+                                    </div>
+                                    <div class="signal-row">
+                                        <div>
+                                            <strong>Open and update later</strong>
+                                            <small>Each bin stays easy to revisit.</small>
+                                        </div>
+                                        <span class="signal-pill is-green"><i class="bi bi-pencil-square"></i> Editable</span>
+                                    </div>
+                                    <div class="signal-row">
+                                        <div>
+                                            <strong>Keep the list tidy</strong>
+                                            <small>Search, sort, renew, or clear old bins.</small>
+                                        </div>
+                                        <span class="signal-pill is-amber"><i class="bi bi-layout-text-window"></i> Organized</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section section-alt" id="overview">
+                <div class="section-shell">
+                    <header class="section-header reveal">
+                        <span class="eyebrow"><i class="bi bi-stars"></i> Why people reach for it</span>
+                        <h2>Made for the small things you need to pass around quickly.</h2>
+                        <p>
+                            Not every note needs a document and not every snippet belongs in chat.
+                            OurBin sits in that gap.
+                        </p>
+                    </header>
+
+                    <div class="story-grid">
+                        <article class="story-card reveal">
+                            <span class="card-icon is-blue"><i class="bi bi-clipboard-plus"></i></span>
+                            <h3>Low friction</h3>
+                            <p>
+                                Paste, create, and move on. The flow stays short and obvious.
+                            </p>
+                        </article>
+
+                        <article class="story-card reveal">
+                            <span class="card-icon is-green"><i class="bi bi-router"></i></span>
+                            <h3>LAN-friendly</h3>
+                            <p>
+                                Share across devices on the same network without adding accounts or heavy setup.
+                            </p>
+                        </article>
+
+                        <article class="story-card reveal">
+                            <span class="card-icon is-amber"><i class="bi bi-list-check"></i></span>
+                            <h3>Easy to manage</h3>
+                            <p>
+                                Search, sort, renew, and clean up bins before the list becomes noise.
+                            </p>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section" id="features">
+                <div class="section-shell">
+                    <header class="section-header reveal">
+                        <span class="eyebrow"><i class="bi bi-grid-1x2"></i> Highlighted features</span>
+                        <h2>Practical features, kept intentionally light.</h2>
+                        <p>
+                            The product stays focused on temporary text sharing and list hygiene.
+                        </p>
+                    </header>
+
+                    <div class="feature-grid">
+                        <article class="feature-card reveal">
+                            <span class="card-icon is-blue"><i class="bi bi-clock-history"></i></span>
+                            <h3>Flexible expiration</h3>
+                            <p>Set a bin for minutes, days, or much longer.</p>
+                        </article>
+                        <article class="feature-card reveal">
+                            <span class="card-icon is-green"><i class="bi bi-upc-scan"></i></span>
+                            <h3>UUID access</h3>
+                            <p>Every bin is easy to reopen and share.</p>
+                        </article>
+                        <article class="feature-card reveal">
+                            <span class="card-icon is-amber"><i class="bi bi-search"></i></span>
+                            <h3>Search and filter</h3>
+                            <p>Find what you need before temporary notes pile up.</p>
+                        </article>
+                        <article class="feature-card reveal">
+                            <span class="card-icon is-cyan"><i class="bi bi-arrow-repeat"></i></span>
+                            <h3>Auto-refresh list</h3>
+                            <p>Keep the board current with minimal effort.</p>
+                        </article>
+                        <article class="feature-card reveal">
+                            <span class="card-icon is-blue"><i class="bi bi-collection"></i></span>
+                            <h3>Batch operations</h3>
+                            <p>Renew or void several bins in one pass.</p>
+                        </article>
+                        <article class="feature-card reveal">
+                            <span class="card-icon is-amber"><i class="bi bi-trash3"></i></span>
+                            <h3>Safe cleanup tools</h3>
+                            <p>Clear maintenance actions help keep the app tidy.</p>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section section-alt" id="workflow">
+                <div class="section-shell">
+                    <header class="section-header reveal">
+                        <span class="eyebrow"><i class="bi bi-diagram-3"></i> How it flows</span>
+                        <h2>A short loop from paste to shared link.</h2>
+                        <p>
+                            The product is quick because each step stays small and predictable.
+                        </p>
+                    </header>
+
+                    <div class="workflow-board reveal">
+                        <article class="workflow-row">
+                            <span class="workflow-step__index">01</span>
+                            <h3>Drop in text</h3>
+                            <p>Paste a note, snippet, link, or short message.</p>
+                        </article>
+                        <article class="workflow-row">
+                            <span class="workflow-step__index">02</span>
+                            <h3>Choose a lifetime</h3>
+                            <p>Keep it short-lived or leave it around for longer.</p>
+                        </article>
+                        <article class="workflow-row">
+                            <span class="workflow-step__index">03</span>
+                            <h3>Share the bin</h3>
+                            <p>Open it on another device and continue from there.</p>
+                        </article>
+                        <article class="workflow-row">
+                            <span class="workflow-step__index">04</span>
+                            <h3>Clean up later</h3>
+                            <p>Search, renew, or clear old bins when you need to.</p>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section" id="demo">
+                <div class="section-shell">
+                    <header class="section-header reveal">
+                        <span class="eyebrow"><i class="bi bi-window-stack"></i> Product preview</span>
+                        <h2>A simple interface, shown as a static demo.</h2>
+                        <p>
+                            This section is visual only. It shows the feel of the product without any live backend connection.
+                        </p>
+                    </header>
+
+                    <div class="demo-grid">
+                        <section class="workspace-card reveal">
+                            <span class="workspace-label"><i class="bi bi-pencil-square"></i> Create a bin</span>
+                            <div class="workspace-head">
+                                <div>
+                                    <h3>Quick and familiar.</h3>
+                                    <p>Paste text, pick an expiration time, and create a shareable bin.</p>
+                                </div>
+                                <div class="workspace-version">
+                                    <i class="bi bi-eye"></i>
+                                    <code>Visual demo</code>
+                                </div>
+                            </div>
+
+                            <div class="workspace-editor">
+                                <textarea class="workspace-textarea" placeholder="Paste a note, a link, or a snippet here...">Standup moved to 10:30.
+Meeting room code: 4802
+Bring the release notes.</textarea>
+                                <div class="workspace-toolbar">
+                                    <button class="workspace-button" type="button">
+                                        <i class="bi bi-clipboard2-plus"></i>
+                                        <span>Paste from clipboard</span>
+                                    </button>
+                                    <select class="workspace-select" aria-label="Expiration time">
+                                        <option value="1">1 min</option>
+                                        <option value="5">5 min</option>
+                                        <option value="10">10 min</option>
+                                        <option value="1440" selected>1 d</option>
+                                        <option value="-1">Never</option>
+                                    </select>
+                                    <button class="workspace-button primary" type="button">
+                                        <i class="bi bi-plus-circle"></i>
+                                        <span>Create bin</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
+
+                        <aside class="workspace-card reveal">
+                            <span class="workspace-label"><i class="bi bi-collection"></i> Example list</span>
+                            <div class="workspace-head">
+                                <div class="workspace-title">
+                                    <h4>Readable at a glance.</h4>
+                                    <div class="workspace-meta">
+                                        <span>Sort and scan quickly</span>
+                                        <span>•</span>
+                                        <span>3 active bins</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="workspace-bins">
+                                <article class="bin">
+                                    <div>
+                                        <span class="binId">f2a9b430d1e7</span>
+                                        <span class="icon"><i class="bi bi-clock-history"></i> 1d</span>
+                                    </div>
+                                    <div class="binPreview">Standup moved to 10:30. Meeting room code: 4802.</div>
+                                    <div class="button_group">
+                                        <button type="button">Copy</button>
+                                        <button type="button">Open</button>
+                                    </div>
+                                </article>
+
+                                <article class="bin">
+                                    <div>
+                                        <span class="binId">8e4db7bcd9a1</span>
+                                        <span class="icon"><i class="bi bi-clock-history"></i> 10m</span>
+                                    </div>
+                                    <div class="binPreview">https://design-review.local/board/18</div>
+                                    <div class="button_group">
+                                        <button type="button">Copy</button>
+                                        <button type="button">Open</button>
+                                    </div>
+                                </article>
+
+                                <article class="bin">
+                                    <div>
+                                        <span class="binId">c67a18d3ef20</span>
+                                        <span class="icon"><i class="bi bi-clock-history"></i> Never</span>
+                                    </div>
+                                    <div class="binPreview">Office Wi-Fi fallback note and printer instructions.</div>
+                                    <div class="button_group">
+                                        <button type="button">Copy</button>
+                                        <button type="button">Open</button>
+                                    </div>
+                                </article>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="section site-footer">
+            <div class="section-shell">
+                <div class="footer-minimal reveal">
+                    <div class="footer-links">
+                        <a href="#top"><i class="bi bi-arrow-up-right"></i> Back to top</a>
+                        <a href="http://github.com/xolyn/ourbin" target="_blank" rel="noreferrer"><i class="bi bi-github"></i> GitHub</a>
+                    </div>
+                    <p>Open-source LAN clipboard for quick text sharing.</p>
+                </div>
+            </div>
+            <div class="bottom-wordmark-wrap reveal">
+                <div class="section-shell">
+                    <span class="hero-wordmark bottom-wordmark" data-fit-text data-parallax="-0.02">OURBIN</span>
+                </div>
+            </div>
+        </footer>
     </div>
 
-    <div class="bins-section">
-        <!-- Header: Title + Sort -->
-        <div class="list-header">
-            <div class="list-title">
-                Existing Bins
-                <span>
-                    (<span id="selected_bins_num" hidden>0</span><span id="total_bins_count">0</span>)
-                </span>
-            </div>
-            
-            <div class="sort-controls">
-                <span style="font-family: 'Material Symbols Rounded'; font-size: large;">sort</span>
-                <select id="sort_by" title="Sort by">
-                    <option value="creation_time" selected>Created</option>
-                    <option value="expiration_time">Expires</option>
-                </select>
-                <select id="sort_order" title="Order">
-                    <option value="desc" selected>Desc</option>
-                    <option value="asc">Asc</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Toolbar: Refresh (Left) | Select, Renew, Delete (Right) -->
-        <div class="list-toolbar">
-            <button data-icon="cached" onclick="refresh(); this.classList.add('icon-rotate'); setTimeout(() => { this.classList.remove('icon-rotate'); }, 1000);" title="Refresh">Refresh</button>
-            <div class="bulk-actions">
-                <button data-icon="control_point_duplicate" id="select">Select all</button>
-                <button class="disabled" id="renew" data-icon="event_repeat" title="Renew +1d">Renew</button>
-                <button class="disabled danger" id="delete" data-icon="delete">Void</button>
-            </div>
-        </div>
-
-        <div id="bins"></div>
-    </div>
-
-    <div id="hd" hidden>
-        <h2>Danger Zone</h2>
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-            <button data-icon="delete_forever" onclick="clearBins()" class="danger">Clean Expired</button>
-            <button data-icon="reset_wrench" onclick="resetDB()" class="danger">Reset Database</button>
-        </div>
-    </div>
-
-    <div style="height: 2rem;"></div>
-</div>
-
-<footer style="background-color: var(--bg-color); position: fixed; bottom: 0; padding: .5rem 0; width: 100%; left:0; box-sizing: border-box; text-align: center; font-size: x-small;">
-    <a href="http://github.com/xolyn/ourbin">OurBin</a> is a opensource LAN clipboard, powered by <a href="https://zhoulingyu.net" target="_blank">Uygnil</a>
-</footer>
-
-<script src="index.js"></script>
+    <script src="./landing.js"></script>
 </body>
 </html>

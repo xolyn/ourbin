@@ -133,7 +133,7 @@ document.querySelector('button[data-icon="delete"]').onclick = async function() 
         const res = await fetch(`${API_BASE}/bins/${binId}`, { method: 'DELETE' });
         if (res.ok) {
             alert('Delete successful');
-            window.location.href = 'ourbin.html';
+            window.location.href = 'index.html#workspace';
         } else {
             alert('Delete failed');
         }
