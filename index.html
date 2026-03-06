@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OurBin — A modern LAN clipboard</title>
-    <meta name="description" content="OurBin is a lightweight LAN clipboard built with FastAPI, SQLite, Docker, and vanilla HTML. Create, edit, share, search, and expire text bins in seconds.">
+    <title>OurBin — A calm LAN clipboard</title>
+    <meta name="description" content="OurBin is a clean LAN clipboard for sharing text quickly across your local network. Simple, searchable, and easy to manage.">
     <link rel="shortcut icon" href="https://img.icons8.com/parakeet-filled/48/box.png" type="image/x-icon">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,11 +22,17 @@
                     <span class="brand-mark"><i class="bi bi-box-seam"></i></span>
                     <span>OurBin</span>
                 </a>
-                <div class="nav-links">
+                <button class="menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="siteMenu" aria-label="Toggle navigation">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="nav-links" id="siteMenu">
+                    <a class="nav-link" href="#overview">Overview</a>
                     <a class="nav-link" href="#features">Features</a>
-                    <a class="nav-link" href="#workflow">Workflow</a>
-                    <a class="nav-link" href="#workspace">Workspace</a>
-                    <a class="nav-link" href="http://localhost:8000/docs" target="_blank" rel="noreferrer">Swagger</a>
+                    <a class="nav-link" href="#workflow">Flow</a>
+                    <a class="nav-link" href="#demo">Demo</a>
+                    <a class="nav-link" href="http://github.com/xolyn/ourbin" target="_blank" rel="noreferrer">GitHub</a>
                 </div>
             </div>
         </nav>
@@ -36,35 +42,34 @@
                 <div class="section-shell">
                     <div class="hero-grid">
                         <article class="hero-copy reveal">
-                            <span class="eyebrow"><i class="bi bi-broadcast"></i> LAN-first clipboard for fast teams and solo setups</span>
-                            <h1>Share text faster, keep it simple, and stay fully in control.</h1>
+                            <span class="eyebrow"><i class="bi bi-broadcast"></i> A local-first clipboard for fast sharing</span>
+                            <h1>Paste once. Open anywhere on your LAN.</h1>
                             <p>
-                                OurBin is a clean clipboard hub for your local network. Paste once, get a UUID instantly,
-                                reopen it anywhere, update it online, keep it for five minutes or forever, and manage everything
-                                with a lightweight FastAPI + SQLite stack.
+                                OurBin turns temporary text into a clean shared link. It is made for notes, snippets,
+                                URLs, and anything you want to move between devices without extra friction.
                             </p>
                             <div class="hero-actions">
-                                <a class="button-primary" href="#workspace">
+                                <a class="button-primary" href="#features">
                                     <i class="bi bi-arrow-down-right-circle"></i>
-                                    <span>Open live workspace</span>
+                                    <span>See features</span>
                                 </a>
-                                <a class="button-secondary" href="http://localhost:8000/redoc" target="_blank" rel="noreferrer">
-                                    <i class="bi bi-journal-code"></i>
-                                    <span>Read API docs</span>
+                                <a class="button-secondary" href="#demo">
+                                    <i class="bi bi-window"></i>
+                                    <span>View demo</span>
                                 </a>
                             </div>
                             <div class="hero-metrics">
                                 <div class="metric">
-                                    <strong>Vanilla</strong>
-                                    <span>HTML, CSS and JS only</span>
+                                    <strong>Fast</strong>
+                                    <span>Designed for quick sharing</span>
                                 </div>
                                 <div class="metric">
-                                    <strong>FastAPI</strong>
-                                    <span>RESTful endpoints with auto docs</span>
+                                    <strong>Clean</strong>
+                                    <span>Simple list and detail flow</span>
                                 </div>
                                 <div class="metric">
-                                    <strong>SQLite</strong>
-                                    <span>Local persistence without overhead</span>
+                                    <strong>Local</strong>
+                                    <span>Built for your network</span>
                                 </div>
                             </div>
                         </article>
@@ -75,84 +80,75 @@
                             </div>
                             <div class="hero-panel__body">
                                 <div class="command-card">
-                                    <code>POST /api/bins
+                                    <code># Meeting notes
 
-{
-  "content": "Deploy at 16:30",
-  "expiration_hours": 24
-}</code>
+Deploy window: 16:30
+Rollback owner: Kevin
+Room: 3F / board 2</code>
                                 </div>
                                 <div class="signal-card">
                                     <div class="signal-row">
                                         <div>
-                                            <strong>Create with flexible lifetime</strong>
-                                            <small>Minutes, days, or effectively never.</small>
+                                            <strong>Share temporary text</strong>
+                                            <small>From quick snippets to day-long notes.</small>
                                         </div>
-                                        <span class="signal-pill is-blue"><i class="bi bi-hourglass-split"></i> Expiring</span>
+                                        <span class="signal-pill is-blue"><i class="bi bi-hourglass-split"></i> Timed</span>
                                     </div>
                                     <div class="signal-row">
                                         <div>
-                                            <strong>Open, edit, copy, and renew</strong>
-                                            <small>UUID-based detail pages with raw text view.</small>
+                                            <strong>Open and update later</strong>
+                                            <small>Each bin stays easy to revisit.</small>
                                         </div>
                                         <span class="signal-pill is-green"><i class="bi bi-pencil-square"></i> Editable</span>
                                     </div>
                                     <div class="signal-row">
                                         <div>
-                                            <strong>Batch-safe operations</strong>
-                                            <small>Soft delete, cleanup, renewal, and confirmed reset.</small>
+                                            <strong>Keep the list tidy</strong>
+                                            <small>Search, sort, renew, or clear old bins.</small>
                                         </div>
-                                        <span class="signal-pill is-amber"><i class="bi bi-shield-check"></i> Managed</span>
+                                        <span class="signal-pill is-amber"><i class="bi bi-layout-text-window"></i> Organized</span>
                                     </div>
                                 </div>
                             </div>
                         </aside>
                     </div>
-
-                    <div class="hero-wordmark-wrap reveal">
-                        <span class="hero-wordmark" data-fit-text>OURBIN</span>
-                    </div>
                 </div>
             </section>
 
-            <section class="section section-alt">
+            <section class="section section-alt" id="overview">
                 <div class="section-shell">
                     <header class="section-header reveal">
-                        <span class="eyebrow"><i class="bi bi-stars"></i> Why it feels useful immediately</span>
-                        <h2>Built for the moment when copy-paste becomes a workflow.</h2>
+                        <span class="eyebrow"><i class="bi bi-stars"></i> Why people reach for it</span>
+                        <h2>Made for the small things you need to pass around quickly.</h2>
                         <p>
-                            Instead of sending temporary text through chat, email, or ad-hoc notes, OurBin keeps the flow local,
-                            searchable, disposable, and still structured enough to scale from quick snippets to day-long coordination.
+                            Not every note needs a document and not every snippet belongs in chat.
+                            OurBin sits in that gap.
                         </p>
                     </header>
 
                     <div class="story-grid">
                         <article class="story-card reveal">
                             <span class="card-icon is-blue"><i class="bi bi-clipboard-plus"></i></span>
-                            <h3>Low friction from the first paste</h3>
+                            <h3>Low friction</h3>
                             <p>
-                                Import directly from the clipboard, create bins in one action, and choose expiration from a minute-level
-                                utility bin to a persistent reference bin.
+                                Paste, create, and move on. The flow stays short and obvious.
                             </p>
-                            <ul>
-                                <li>Clipboard import and direct typing</li>
-                                <li>Flexible expiration from minutes to permanent</li>
-                                <li>One-page creation flow with instant listing</li>
-                            </ul>
                         </article>
 
                         <article class="story-card reveal">
                             <span class="card-icon is-green"><i class="bi bi-router"></i></span>
-                            <h3>Shareable across your LAN, grounded in local control</h3>
+                            <h3>LAN-friendly</h3>
                             <p>
-                                Each item gets a UUID, so it can be reopened or edited from another device on the same network
-                                without adding accounts, sync layers, or heavy dependencies.
+                                Share across devices on the same network without adding accounts or heavy setup.
                             </p>
-                            <ul>
-                                <li>UUID access for view and edit flows</li>
-                                <li>Raw text endpoint for direct retrieval</li>
-                                <li>FastAPI health checks and generated documentation</li>
-                            </ul>
+                        </article>
+
+                        <article class="story-card reveal">
+                            <span class="card-icon is-amber"><i class="bi bi-list-check"></i></span>
+                            <h3>Easy to manage</h3>
+                            <p>
+                                Search, sort, renew, and clean up bins before the list becomes noise.
+                            </p>
                         </article>
                     </div>
                 </div>
@@ -162,10 +158,9 @@
                 <div class="section-shell">
                     <header class="section-header reveal">
                         <span class="eyebrow"><i class="bi bi-grid-1x2"></i> Highlighted features</span>
-                        <h2>Everything important is visible, editable, and intentionally lightweight.</h2>
+                        <h2>Practical features, kept intentionally light.</h2>
                         <p>
-                            The interface focuses on the features that matter in daily use: fast creation, reliable retrieval,
-                            clear expiration behavior, and practical maintenance tools when bins pile up.
+                            The product stays focused on temporary text sharing and list hygiene.
                         </p>
                     </header>
 
@@ -173,177 +168,113 @@
                         <article class="feature-card reveal">
                             <span class="card-icon is-blue"><i class="bi bi-clock-history"></i></span>
                             <h3>Flexible expiration</h3>
-                            <p>Create bins that last one minute, one week, or effectively never with a single selector.</p>
+                            <p>Set a bin for minutes, days, or much longer.</p>
                         </article>
                         <article class="feature-card reveal">
                             <span class="card-icon is-green"><i class="bi bi-upc-scan"></i></span>
                             <h3>UUID access</h3>
-                            <p>Open any valid bin by UUID, inspect full content, edit it online, and keep links stable.</p>
+                            <p>Every bin is easy to reopen and share.</p>
                         </article>
                         <article class="feature-card reveal">
                             <span class="card-icon is-amber"><i class="bi bi-search"></i></span>
                             <h3>Search and filter</h3>
-                            <p>Filter the visible list in real time and pair it with sort controls for faster scanning.</p>
+                            <p>Find what you need before temporary notes pile up.</p>
                         </article>
                         <article class="feature-card reveal">
                             <span class="card-icon is-cyan"><i class="bi bi-arrow-repeat"></i></span>
                             <h3>Auto-refresh list</h3>
-                            <p>Keep the workspace fresh with regular refreshes plus a manual refresh whenever you want certainty.</p>
+                            <p>Keep the board current with minimal effort.</p>
                         </article>
                         <article class="feature-card reveal">
                             <span class="card-icon is-blue"><i class="bi bi-collection"></i></span>
                             <h3>Batch operations</h3>
-                            <p>Select multiple bins to renew them together or void them in one pass.</p>
-                        </article>
-                        <article class="feature-card reveal">
-                            <span class="card-icon is-green"><i class="bi bi-link-45deg"></i></span>
-                            <h3>Share, copy, and raw view</h3>
-                            <p>Copy content, open URLs, and access a raw endpoint for plain-text retrieval.</p>
+                            <p>Renew or void several bins in one pass.</p>
                         </article>
                         <article class="feature-card reveal">
                             <span class="card-icon is-amber"><i class="bi bi-trash3"></i></span>
                             <h3>Safe cleanup tools</h3>
-                            <p>Expired bin cleanup and database reset are separated into a clear maintenance zone.</p>
-                        </article>
-                        <article class="feature-card reveal">
-                            <span class="card-icon is-cyan"><i class="bi bi-braces-asterisk"></i></span>
-                            <h3>API-first foundation</h3>
-                            <p>RESTful endpoints, Swagger UI, and ReDoc are ready out of the box for automation and extension.</p>
+                            <p>Clear maintenance actions help keep the app tidy.</p>
                         </article>
                     </div>
                 </div>
             </section>
 
-            <section class="section section-dark" id="workflow">
+            <section class="section section-alt" id="workflow">
                 <div class="section-shell">
                     <header class="section-header reveal">
-                        <span class="eyebrow"><i class="bi bi-diagram-3"></i> Workflow and architecture</span>
-                        <h2>Simple on the surface, well-shaped underneath.</h2>
+                        <span class="eyebrow"><i class="bi bi-diagram-3"></i> How it flows</span>
+                        <h2>A short loop from paste to shared link.</h2>
                         <p>
-                            OurBin keeps the frontend light while the backend handles storage, expiration, renewal,
-                            raw text delivery, and operational maintenance through a compact API surface.
+                            The product is quick because each step stays small and predictable.
                         </p>
                     </header>
 
-                    <div class="workflow">
-                        <div class="workflow-list">
-                            <article class="workflow-step reveal">
-                                <div class="workflow-step__index">01</div>
-                                <div>
-                                    <h3>Paste or type once</h3>
-                                    <p>Capture plain text quickly, optionally import from clipboard, and assign the right lifetime.</p>
-                                </div>
-                            </article>
-                            <article class="workflow-step reveal">
-                                <div class="workflow-step__index">02</div>
-                                <div>
-                                    <h3>Get a durable handle</h3>
-                                    <p>Each bin receives a UUID, making it easy to revisit, edit, share, or fetch as raw text later.</p>
-                                </div>
-                            </article>
-                            <article class="workflow-step reveal">
-                                <div class="workflow-step__index">03</div>
-                                <div>
-                                    <h3>Manage at list scale</h3>
-                                    <p>Sort by creation or expiration, batch renew selected bins, soft delete them, or clean expired ones.</p>
-                                </div>
-                            </article>
-                            <article class="workflow-step reveal">
-                                <div class="workflow-step__index">04</div>
-                                <div>
-                                    <h3>Deploy without ceremony</h3>
-                                    <p>Run it locally with Python or ship it with Docker Compose while keeping data in SQLite.</p>
-                                </div>
-                            </article>
-                        </div>
-
-                        <aside class="workflow-spotlight reveal" data-parallax="0.04">
-                            <span class="workspace-label"><i class="bi bi-cpu"></i> Under the hood</span>
-                            <h3>FastAPI + SQLite + Docker + zero-build frontend.</h3>
-                            <p>
-                                The stack stays approachable but production-friendly enough for internal use. No framework lock-in,
-                                no client build step, and no unnecessary ceremony for a tool that should just work.
-                            </p>
-                            <ul>
-                                <li>Python 3.11+, FastAPI, SQLite</li>
-                                <li>REST API with health endpoint and generated docs</li>
-                                <li>Docker Compose deployment with persistent data volume</li>
-                                <li>Vanilla frontend that remains easy to audit and modify</li>
-                            </ul>
-                        </aside>
-                    </div>
-
-                    <div class="stack-grid" style="margin-top: 24px;">
-                        <article class="stack-card reveal">
-                            <span class="card-icon is-blue"><i class="bi bi-boxes"></i></span>
-                            <h3>Operational clarity</h3>
-                            <p>Version checks, cleanup actions, and reset confirmation keep maintenance explicit instead of hidden.</p>
+                    <div class="workflow-board reveal">
+                        <article class="workflow-row">
+                            <span class="workflow-step__index">01</span>
+                            <h3>Drop in text</h3>
+                            <p>Paste a note, snippet, link, or short message.</p>
                         </article>
-                        <article class="stack-card reveal">
-                            <span class="card-icon is-green"><i class="bi bi-sort-down"></i></span>
-                            <h3>Designed for overview</h3>
-                            <p>Sorting by creation or expiration helps the list stay usable even when temporary bins accumulate quickly.</p>
+                        <article class="workflow-row">
+                            <span class="workflow-step__index">02</span>
+                            <h3>Choose a lifetime</h3>
+                            <p>Keep it short-lived or leave it around for longer.</p>
                         </article>
-                        <article class="stack-card reveal">
-                            <span class="card-icon is-amber"><i class="bi bi-lightning-charge"></i></span>
-                            <h3>Fast by default</h3>
-                            <p>Short flows, local storage, and simple HTML pages keep interaction latency and maintenance overhead low.</p>
+                        <article class="workflow-row">
+                            <span class="workflow-step__index">03</span>
+                            <h3>Share the bin</h3>
+                            <p>Open it on another device and continue from there.</p>
+                        </article>
+                        <article class="workflow-row">
+                            <span class="workflow-step__index">04</span>
+                            <h3>Clean up later</h3>
+                            <p>Search, renew, or clear old bins when you need to.</p>
                         </article>
                     </div>
                 </div>
             </section>
 
-            <section class="section section-alt" id="workspace">
+            <section class="section" id="demo">
                 <div class="section-shell">
                     <header class="section-header reveal">
-                        <span class="eyebrow"><i class="bi bi-window-stack"></i> Live workspace</span>
-                        <h2>Use the app directly from the same page.</h2>
+                        <span class="eyebrow"><i class="bi bi-window-stack"></i> Product preview</span>
+                        <h2>A simple interface, shown as a static demo.</h2>
                         <p>
-                            The section below is not a mockup. It keeps the real OurBin workflow on the page, while the surrounding
-                            layout explains what the product does and why it feels fast.
+                            This section is visual only. It shows the feel of the product without any live backend connection.
                         </p>
                     </header>
 
-                    <div class="workspace-grid">
-                        <section class="workspace-card workspace-card--dark reveal">
+                    <div class="demo-grid">
+                        <section class="workspace-card reveal">
                             <span class="workspace-label"><i class="bi bi-pencil-square"></i> Create a bin</span>
                             <div class="workspace-head">
                                 <div>
-                                    <h3>Capture now, share instantly.</h3>
-                                    <p>
-                                        Paste from the clipboard, type manually, pick an expiration policy, and create a new bin without
-                                        leaving the page.
-                                    </p>
+                                    <h3>Quick and familiar.</h3>
+                                    <p>Paste text, pick an expiration time, and create a shareable bin.</p>
                                 </div>
-                                <div class="workspace-version" ondblclick="document.getElementById('hd').toggleAttribute('hidden')" title="Double-click to reveal maintenance tools">
-                                    <i class="bi bi-shield-lock"></i>
-                                    <code>v<span id="version">...</span></code>
+                                <div class="workspace-version">
+                                    <i class="bi bi-eye"></i>
+                                    <code>Visual demo</code>
                                 </div>
                             </div>
 
                             <div class="workspace-editor">
-                                <textarea id="new" class="workspace-textarea" placeholder="Paste a deployment note, a URL, a code snippet, or any plain text you want to access across your LAN."></textarea>
+                                <textarea class="workspace-textarea" placeholder="Paste a note, a link, or a snippet here...">Standup moved to 10:30.
+Meeting room code: 4802
+Bring the release notes.</textarea>
                                 <div class="workspace-toolbar">
-                                    <button class="workspace-button" type="button" onclick="importFromClipboard()">
+                                    <button class="workspace-button" type="button">
                                         <i class="bi bi-clipboard2-plus"></i>
                                         <span>Paste from clipboard</span>
                                     </button>
-                                    <select id="expiration" class="workspace-select" aria-label="Expiration time">
-                                        <option disabled>Expiration</option>
+                                    <select class="workspace-select" aria-label="Expiration time">
                                         <option value="1">1 min</option>
                                         <option value="5">5 min</option>
                                         <option value="10">10 min</option>
-                                        <option value="30">30 min</option>
-                                        <option value="60">1 hr</option>
-                                        <option value="120">2 hr</option>
-                                        <option value="240">4 hr</option>
-                                        <option value="480">8 hr</option>
                                         <option value="1440" selected>1 d</option>
-                                        <option value="2880">2 d</option>
-                                        <option value="10080">1 w</option>
                                         <option value="-1">Never</option>
                                     </select>
-                                    <button class="workspace-button primary" type="button" data-icon="order_approve">
+                                    <button class="workspace-button primary" type="button">
                                         <i class="bi bi-plus-circle"></i>
                                         <span>Create bin</span>
                                     </button>
@@ -352,60 +283,54 @@
                         </section>
 
                         <aside class="workspace-card reveal">
-                            <span class="workspace-label"><i class="bi bi-collection"></i> Active bins</span>
+                            <span class="workspace-label"><i class="bi bi-collection"></i> Example list</span>
                             <div class="workspace-head">
                                 <div class="workspace-title">
-                                    <h4>Manage, search, and maintain.</h4>
+                                    <h4>Readable at a glance.</h4>
                                     <div class="workspace-meta">
-                                        <span id="autoRefreshLabel">Auto refresh every 30s</span>
+                                        <span>Sort and scan quickly</span>
                                         <span>•</span>
-                                        <span id="selected_bins_num" hidden>0</span>
-                                        <span class="separator">/</span>
-                                        <span><span id="total_bins_count">0</span> active bins</span>
+                                        <span>3 active bins</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="workspace-sidebar">
-                                <div class="workspace-control-row">
-                                    <input id="binSearch" class="workspace-input" type="search" placeholder="Search visible bins">
-                                    <button id="refreshButton" class="workspace-button spin-on-click" type="button" title="Refresh bins">
-                                        <i class="bi bi-arrow-clockwise"></i>
-                                        <span>Refresh</span>
-                                    </button>
-                                    <select id="sort_by" class="workspace-select" title="Sort by">
-                                        <option value="creation_time" selected>Created</option>
-                                        <option value="expiration_time">Expires</option>
-                                    </select>
-                                    <select id="sort_order" class="workspace-select" title="Sort order">
-                                        <option value="desc" selected>Desc</option>
-                                        <option value="asc">Asc</option>
-                                    </select>
-                                </div>
-
-                                <div class="workspace-utility">
-                                    <button class="workspace-button" id="select" type="button">Select all</button>
-                                    <button class="workspace-button disabled" id="renew" type="button" title="Renew selected bins for another day">Renew +1d</button>
-                                    <button class="workspace-button danger disabled" id="delete" type="button">Void selected</button>
-                                </div>
-
-                                <div id="bins" class="workspace-bins"></div>
-                                <div id="filterEmptyState" class="filter-empty" hidden>No visible bins match your search yet.</div>
-
-                                <section id="hd" class="danger-card" hidden>
-                                    <h4>Danger zone</h4>
-                                    <p>Maintenance tools live here on purpose. Clean expired bins, or reset the database after entering a generated confirmation code.</p>
-                                    <div class="danger-actions">
-                                        <button class="workspace-button danger" type="button" onclick="clearBins()">
-                                            <i class="bi bi-trash3"></i>
-                                            <span>Clean expired</span>
-                                        </button>
-                                        <button class="workspace-button danger" type="button" onclick="resetDB()">
-                                            <i class="bi bi-exclamation-diamond"></i>
-                                            <span>Reset database</span>
-                                        </button>
+                            <div class="workspace-bins">
+                                <article class="bin">
+                                    <div>
+                                        <span class="binId">f2a9b430d1e7</span>
+                                        <span class="icon"><i class="bi bi-clock-history"></i> 1d</span>
                                     </div>
-                                </section>
+                                    <div class="binPreview">Standup moved to 10:30. Meeting room code: 4802.</div>
+                                    <div class="button_group">
+                                        <button type="button">Copy</button>
+                                        <button type="button">Open</button>
+                                    </div>
+                                </article>
+
+                                <article class="bin">
+                                    <div>
+                                        <span class="binId">8e4db7bcd9a1</span>
+                                        <span class="icon"><i class="bi bi-clock-history"></i> 10m</span>
+                                    </div>
+                                    <div class="binPreview">https://design-review.local/board/18</div>
+                                    <div class="button_group">
+                                        <button type="button">Copy</button>
+                                        <button type="button">Open</button>
+                                    </div>
+                                </article>
+
+                                <article class="bin">
+                                    <div>
+                                        <span class="binId">c67a18d3ef20</span>
+                                        <span class="icon"><i class="bi bi-clock-history"></i> Never</span>
+                                    </div>
+                                    <div class="binPreview">Office Wi-Fi fallback note and printer instructions.</div>
+                                    <div class="button_group">
+                                        <button type="button">Copy</button>
+                                        <button type="button">Open</button>
+                                    </div>
+                                </article>
                             </div>
                         </aside>
                     </div>
@@ -415,26 +340,22 @@
 
         <footer class="section site-footer">
             <div class="section-shell">
-                <div class="footer-panel reveal">
-                    <div class="footer-panel__top">
-                        <div class="footer-panel__brand" data-parallax="-0.02">OurBin</div>
-                        <div class="footer-links">
-                            <a href="#top"><i class="bi bi-arrow-up-right"></i> Back to top</a>
-                            <a href="http://github.com/xolyn/ourbin" target="_blank" rel="noreferrer"><i class="bi bi-github"></i> GitHub</a>
-                            <a href="http://localhost:8000/docs" target="_blank" rel="noreferrer"><i class="bi bi-code-square"></i> Swagger UI</a>
-                            <a href="http://localhost:8000/redoc" target="_blank" rel="noreferrer"><i class="bi bi-file-text"></i> ReDoc</a>
-                        </div>
+                <div class="footer-minimal reveal">
+                    <div class="footer-links">
+                        <a href="#top"><i class="bi bi-arrow-up-right"></i> Back to top</a>
+                        <a href="http://github.com/xolyn/ourbin" target="_blank" rel="noreferrer"><i class="bi bi-github"></i> GitHub</a>
                     </div>
-                    <div class="footer-meta">
-                        <span>Open-source LAN clipboard built with FastAPI, SQLite and vanilla frontend.</span>
-                        <span>&copy; <span id="footerYear"></span> OurBin</span>
-                    </div>
+                    <p>Open-source LAN clipboard for quick text sharing.</p>
+                </div>
+            </div>
+            <div class="bottom-wordmark-wrap reveal">
+                <div class="section-shell">
+                    <span class="hero-wordmark bottom-wordmark" data-fit-text data-parallax="-0.02">OURBIN</span>
                 </div>
             </div>
         </footer>
     </div>
 
-    <script src="./index.js"></script>
     <script src="./landing.js"></script>
 </body>
 </html>

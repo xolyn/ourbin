@@ -22,6 +22,37 @@ function fitAllWordmarks() {
     document.querySelectorAll("[data-fit-text]").forEach(fitWordmark);
 }
 
+function setupMenuToggle() {
+    const toggle = document.getElementById("menuToggle");
+    const menu = document.getElementById("siteMenu");
+
+    if (!toggle || !menu) {
+        return;
+    }
+
+    const closeMenu = () => {
+        toggle.classList.remove("is-open");
+        toggle.setAttribute("aria-expanded", "false");
+        menu.classList.remove("is-open");
+    };
+
+    toggle.addEventListener("click", () => {
+        const isOpen = toggle.classList.toggle("is-open");
+        toggle.setAttribute("aria-expanded", String(isOpen));
+        menu.classList.toggle("is-open", isOpen);
+    });
+
+    menu.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", closeMenu);
+    });
+
+    window.addEventListener("resize", () => {
+        if (window.innerWidth > 780) {
+            closeMenu();
+        }
+    });
+}
+
 function setupRevealAnimations() {
     const revealItems = document.querySelectorAll(".reveal");
     if (!revealItems.length) {
@@ -77,86 +108,11 @@ function setupParallax() {
     requestTick();
 }
 
-function setupWorkspaceSearch() {
-    const searchInput = document.getElementById("binSearch");
-    const binsContainer = document.getElementById("bins");
-    const emptyState = document.getElementById("filterEmptyState");
-
-    if (!searchInput || !binsContainer || !emptyState) {
-        return;
-    }
-
-    const applyFilter = () => {
-        const query = searchInput.value.trim().toLowerCase();
-        const bins = Array.from(binsContainer.querySelectorAll(".bin"));
-        let visibleCount = 0;
-
-        bins.forEach((bin) => {
-            const text = bin.innerText.toLowerCase();
-            const match = !query || text.includes(query);
-            bin.hidden = !match;
-            if (match) {
-                visibleCount += 1;
-            }
-        });
-
-        emptyState.hidden = !(query && bins.length > 0 && visibleCount === 0);
-    };
-
-    searchInput.addEventListener("input", applyFilter);
-
-    const observer = new MutationObserver(applyFilter);
-    observer.observe(binsContainer, { childList: true, subtree: true });
-}
-
-function setupRefreshButton() {
-    const refreshButton = document.getElementById("refreshButton");
-    if (!refreshButton) {
-        return;
-    }
-
-    refreshButton.addEventListener("click", () => {
-        if (typeof refresh === "function") {
-            refresh();
-        }
-
-        refreshButton.classList.remove("is-spinning");
-        window.requestAnimationFrame(() => {
-            refreshButton.classList.add("is-spinning");
-            window.setTimeout(() => refreshButton.classList.remove("is-spinning"), 850);
-        });
-    });
-}
-
-function setupAutoRefresh() {
-    const autoRefreshLabel = document.getElementById("autoRefreshLabel");
-    const refreshEveryMs = 30000;
-
-    window.setInterval(() => {
-        if (document.visibilityState === "visible" && typeof refresh === "function") {
-            refresh();
-            if (autoRefreshLabel) {
-                autoRefreshLabel.textContent = "Auto refresh every 30s";
-            }
-        }
-    }, refreshEveryMs);
-}
-
-function setupFooterYear() {
-    const target = document.getElementById("footerYear");
-    if (target) {
-        target.textContent = String(new Date().getFullYear());
-    }
-}
-
 document.addEventListener("DOMContentLoaded", () => {
+    setupMenuToggle();
     fitAllWordmarks();
     setupRevealAnimations();
     setupParallax();
-    setupWorkspaceSearch();
-    setupRefreshButton();
-    setupAutoRefresh();
-    setupFooterYear();
 
     if (document.fonts && typeof document.fonts.ready?.then === "function") {
         document.fonts.ready.then(fitAllWordmarks);
