@@ -90,8 +90,8 @@
         /* Header */
         header {
             display: flex;
-            align-items: baseline;
-            gap: 0.5rem;
+            justify-content: space-between;
+            align-items: center;
         }
         
         h1 {
@@ -101,12 +101,189 @@
             letter-spacing: -0.025em;
         }
 
-        .version-tag {
-            font-size: 0.75rem;
+        .settings-version {
+            margin-top: 1.25rem;
+            text-align: center;
+            font-size: 0.72rem;
             color: var(--text-secondary);
             font-family: monospace;
             cursor: pointer;
             user-select: none;
+        }
+
+        /* Settings */
+        .gear-btn {
+            align-self: center;
+            background: none;
+            border: none;
+            padding: 0.25rem;
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .gear-btn:before {
+            font-size: 1.5rem;
+            margin-right: 0;
+        }
+
+        .gear-btn:hover:not(:disabled), .gear-btn:active:not(:disabled) {
+            background: none;
+            border: none;
+            color: var(--text-main);
+            transform: none;
+        }
+
+        dialog {
+            background: var(--card-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            padding: 1.25rem 1.5rem;
+            min-width: 640px;
+            max-width: calc(100vw - 2rem);
+            font-family: var(--font-main);
+        }
+
+        dialog::backdrop {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+        }
+
+        .dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        dialog h2 {
+            margin: 0;
+            font-size: 1.35rem;
+        }
+
+        .dialog-close {
+            background: none;
+            border: none;
+            padding: 0.25rem;
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .dialog-close:before {
+            font-size: 1.5rem;
+            margin-right: 0;
+        }
+
+        .dialog-close:hover:not(:disabled), .dialog-close:active:not(:disabled) {
+            background: none;
+            border: none;
+            color: var(--text-main);
+            transform: none;
+        }
+
+        .settings-section {
+            margin-bottom: 1.25rem;
+        }
+
+        .settings-section h3 {
+            margin: 0 0 0.25rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+            padding: 0.65rem 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .settings-row:last-of-type {
+            border-bottom: none;
+        }
+
+        .settings-row label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .settings-row input[type="color"] {
+            width: 3rem;
+            height: 1.75rem;
+            padding: 0.1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background: var(--card-bg);
+            cursor: pointer;
+        }
+
+        /* Go button link dropdown */
+        .go-group {
+            position: relative;
+            display: inline-flex;
+        }
+
+        .go-group > button:first-child {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .go-caret {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            padding: 0.3rem 0.15rem;
+            margin-left: -1px;
+        }
+
+        .go-caret:before {
+            margin-right: 0;
+        }
+
+        .go-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 0.25rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-md);
+            z-index: 50;
+            flex-direction: column;
+            min-width: 240px;
+            overflow: hidden;
+        }
+
+        .go-menu.open {
+            display: flex;
+        }
+
+        .go-menu button {
+            justify-content: flex-start;
+            border: none;
+            border-radius: 0;
+            background: none;
+            white-space: nowrap;
+            font-family: monospace;
+            font-size: 0.75rem;
+        }
+
+        .go-menu button:hover:not(:disabled) {
+            background-color: #F5F5F5;
+            border: none;
         }
 
         /* Editor Section */
@@ -377,20 +554,22 @@
             background: none !important; /* Reset any potential bg */
         }
 
-        /* Danger Zone */
-        #hd {
-            margin-top: 3rem;
-            padding: 1.5rem;
+        .settings-section.danger {
             border: 1px dashed var(--danger-color);
             border-radius: var(--radius-md);
             background-color: #FEF2F2;
+            padding: 1rem;
         }
-        
-        #hd h2 {
-            margin-top: 0;
+
+        .settings-section.danger h3 {
             color: var(--danger-color);
-            font-size: 1rem;
-            margin-bottom: 1rem;
+        }
+
+        .danger-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            padding: 0.5rem 0 0;
         }
 
         /* Checkbox styling */
@@ -463,9 +642,7 @@
 <div class="app-container">
     <header>
         <h1>OurBin</h1>
-        <sup class="version-tag" ondblclick="document.getElementById('hd').toggleAttribute('hidden')">
-            v<span id="version">...</span>
-        </sup>
+        <button class="gear-btn" data-icon="settings" title="Settings" onclick="openSettings()"></button>
     </header>
 
     <div class="editor-card">
@@ -529,21 +706,53 @@
         <div id="bins"></div>
     </div>
 
-    <div id="hd" hidden>
-        <h2>Danger Zone</h2>
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+    <div style="height: 2rem;"></div>
+</div>
+
+<dialog id="settings_dialog">
+    <div class="dialog-header">
+        <h2>Settings</h2>
+        <button class="dialog-close" data-icon="close" title="Close" onclick="document.getElementById('settings_dialog').close()"></button>
+    </div>
+    <section class="settings-section">
+        <h3>Alert</h3>
+        <div class="settings-row">
+            <label>
+                <input type="checkbox" id="cfg_alert_on_copy" onchange="saveSettings()">
+                Alert after copy
+            </label>
+        </div>
+        <div class="settings-row">
+            <label>
+                <input type="checkbox" id="cfg_confirm_on_void" onchange="saveSettings()">
+                Confirm before void
+            </label>
+        </div>
+    </section>
+    <section class="settings-section">
+        <h3>Customization</h3>
+        <div class="settings-row">
+            <label for="cfg_theme_color">Theme color</label>
+            <input type="color" id="cfg_theme_color" oninput="saveSettings()">
+        </div>
+    </section>
+    <section class="settings-section danger">
+        <h3>Danger Zone</h3>
+        <div class="danger-actions">
             <button data-icon="delete_forever" onclick="clearBins()" class="danger">Clean Expired</button>
             <button data-icon="reset_wrench" onclick="resetDB()" class="danger">Reset Database</button>
         </div>
+    </section>
+    <div class="settings-version">
+        v<span id="version">...</span>
     </div>
-
-    <div style="height: 2rem;"></div>
-</div>
+</dialog>
 
 <footer style="background-color: var(--bg-color); position: fixed; bottom: 0; padding: .5rem 0; width: 100%; left:0; box-sizing: border-box; text-align: center; font-size: x-small;">
     <a href="http://github.com/xolyn/ourbin">OurBin</a> is a opensource LAN clipboard, powered by <a href="https://zhoulingyu.net" target="_blank">Uygnil</a>
 </footer>
 
+<script src="settings.js"></script>
 <script src="index.js"></script>
 </body>
 </html>

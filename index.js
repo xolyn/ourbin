@@ -58,30 +58,41 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// 检测内容是否为单个URL
-function isSingleUrl(content) {
-    const trimmed = content.trim();
-    if (!trimmed) return null;
-    
-    // 检查是否只包含一个"词"（没有空格、换行等）
-    if (trimmed.includes(' ') || trimmed.includes('\n') || trimmed.includes('\r')) {
-        return null; // 包含空格或换行，不是单个URL
-    }
-    
-    // URL正则：支持http://、https://或直接域名
-    // 匹配：http://example.com, https://example.com, example.com, www.example.com/path
-    const urlWithProtocol = /^https?:\/\/[\w\.-]+(\.[\w\.-]+)+([\/\w \.\-]*)*\/?$/i;
-    const urlWithoutProtocol = /^[\w\.-]+(\.[\w\.-]+)+([\/\w \.\-]*)*\/?$/i;
-    
-    // 检查是否符合URL格式
-    if (urlWithProtocol.test(trimmed)) {
-        return trimmed; // 已有协议前缀
-    } else if (urlWithoutProtocol.test(trimmed)) {
-        return 'http://' + trimmed; 
-    }
-    
-    return null; // 不符合URL格式
+// 截断长URL用于下拉展示：前后各保留10个字符
+function shortUrl(url) {
+    return url.length <= 23 ? url : url.slice(0, 10) + '...' + url.slice(-10);
 }
+
+// 设置面板
+function openSettings() {
+    const s = OurBinSettings.load();
+    document.getElementById('cfg_alert_on_copy').checked = s.alertOnCopy;
+    document.getElementById('cfg_confirm_on_void').checked = s.confirmOnVoid;
+    document.getElementById('cfg_theme_color').value = s.themeColor;
+    document.getElementById('settings_dialog').showModal();
+}
+
+function saveSettings() {
+    OurBinSettings.save({
+        alertOnCopy: document.getElementById('cfg_alert_on_copy').checked,
+        confirmOnVoid: document.getElementById('cfg_confirm_on_void').checked,
+        themeColor: document.getElementById('cfg_theme_color').value
+    });
+}
+
+// 多链接下拉菜单
+function toggleGoMenu(caret) {
+    const menu = caret.parentElement.querySelector('.go-menu');
+    const willOpen = !menu.classList.contains('open');
+    document.querySelectorAll('.go-menu.open').forEach(m => m.classList.remove('open'));
+    menu.classList.toggle('open', willOpen);
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.go-group')) {
+        document.querySelectorAll('.go-menu.open').forEach(m => m.classList.remove('open'));
+    }
+});
 
 // 格式化时间剩余
 function formatTimeLeft(expirationTime) {
@@ -125,15 +136,23 @@ async function refresh() {
             
             const timeLeft = formatTimeLeft(bin.expiration_time);
             
-            // 如果 truncated=0，尝试检测是否为URL (后端已经处理了如果是URL则不截断且返回完整)
-            // 但前端仍需 isSingleUrl 来决定是否显示 "Go" 按钮
-            // 只有当 truncated=false 时，才可能是完整的URL
-            const url = (!bin.truncated) ? isSingleUrl(bin.content) : null;
+            // 后端已从完整内容中提取所有链接
+            const urls = bin.urls || [];
             
             // 构建按钮组HTML
             let buttonsHtml = `<button data-icon="copy_all" onclick="copyBinContent('${bin.uuid}')">Copy all</button>`;
-            if (url) {
-                buttonsHtml += `<button data-icon="open_in_new" onclick="window.open('${escapeHtml(url)}', '_blank')">Go</button>`;
+            if (urls.length === 1) {
+                buttonsHtml += `<button data-icon="open_in_new" onclick="window.open(this.dataset.url, '_blank')" data-url="${escapeHtml(urls[0])}">Go</button>`;
+            } else if (urls.length > 1) {
+                const menuItems = urls.map(u =>
+                    `<button data-url="${escapeHtml(u)}" onclick="window.open(this.dataset.url, '_blank'); this.closest('.go-menu').classList.remove('open')">${escapeHtml(shortUrl(u))}</button>`
+                ).join('');
+                buttonsHtml += `
+                    <span class="go-group">
+                        <button data-icon="open_in_new" onclick="window.open(this.dataset.url, '_blank')" data-url="${escapeHtml(urls[0])}">Go</button>
+                        <button class="go-caret" data-icon="arrow_drop_down" title="Choose link" onclick="toggleGoMenu(this)"></button>
+                        <div class="go-menu">${menuItems}</div>
+                    </span>`;
             }
             buttonsHtml += `<button style="margin-left:auto" data-icon="delete" class="red" onclick="deleteBin('${bin.uuid}')">Void</button>`;
             
@@ -235,7 +254,7 @@ document.getElementById('select').onclick = function() {
 
 // 删除bin
 async function deleteBin(uuid) {
-    if (!confirm('确定要删除这个bin吗？')) return;
+    if (OurBinSettings.load().confirmOnVoid && !confirm('确定要删除这个bin吗？')) return;
     try {
         const res = await fetch(`${API_BASE}/bins/${uuid}`, { method: 'DELETE' });
         if (res.ok) {
@@ -253,7 +272,7 @@ async function deleteBin(uuid) {
 document.getElementById('delete').onclick = async function() {
     const selected = document.querySelectorAll('.bin.selected');
     if (selected.length === 0) return;
-    if (!confirm(`确定要删除 ${selected.length} 个bin吗？`)) return;
+    if (OurBinSettings.load().confirmOnVoid && !confirm(`确定要删除 ${selected.length} 个bin吗？`)) return;
     
     const uuids = Array.from(selected).map(bin => bin.dataset.id);
     try {
@@ -275,7 +294,7 @@ async function copyBinContent(uuid) {
         const res = await fetch(`${API_BASE}/bins/${uuid}`);
         const bin = await res.json();
         await navigator.clipboard.writeText(bin.content);
-        alert('已复制到剪贴板');
+        if (OurBinSettings.load().alertOnCopy) alert('已复制到剪贴板');
     } catch (err) {
         console.error('复制失败：', err);
         alert('复制失败：' + err.message);

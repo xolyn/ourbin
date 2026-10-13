@@ -11,6 +11,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 复制应用代码
 COPY app.py .
 
+# 复制前端静态文件
+COPY index.html bin.html index.js bin.js settings.js msr.woff2 ./
+
 # 创建数据目录用于持久化数据库
 RUN mkdir -p /app/data
 

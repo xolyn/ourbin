@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 import sqlite3
@@ -10,7 +10,7 @@ from typing import List, Optional
 
 import re
 
-APP_VERSION = "1.3.1"
+APP_VERSION = "1.4.1"
 PORT=8000
 
 app = FastAPI(title="OurBin API", version=APP_VERSION)
@@ -48,6 +48,7 @@ class BinListItem(BaseModel):
     expiration_time: int
     content: str
     truncated: bool = False
+    urls: List[str] = []
 
 class BinRenew(BaseModel):
     uuids: List[str]  # UUID列表
@@ -85,6 +86,30 @@ def get_db():
 # 生成UUID
 def generate_uuid():
     return str(uuid.uuid4())[:14].replace('-', '')  # 生成14位UUID
+
+# 从内容中提取所有链接（用于前端多链接下拉选择）
+# URL 字符集中排除空白、引号括号尖括号以及 CJK/全角字符（避免把紧贴 URL 的中文吞进去）
+URL_BODY = r'[^\s<>"\'()\[\]{}\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]+'
+URL_IN_TEXT_RE = re.compile(r'https?://' + URL_BODY, re.IGNORECASE)
+BARE_DOMAIN_RE = re.compile(
+    r'(?<![\w/.@-])(?:[\w-]+\.)+'
+    r'(?:com|net|org|edu|gov|io|co|me|ai|dev|app|cn|top|xyz|info|site|tech|cloud|store|online|uk|de|jp|kr|ru|fr|tv|cc)'
+    r'(?:/' + URL_BODY + r')?',
+    re.IGNORECASE
+)
+TRAILING_PUNCT = '.,;:!?，。；：！？、）)]}\'"'
+
+def extract_urls(content: str) -> List[str]:
+    matches = [(m.start(), m.group(0)) for m in URL_IN_TEXT_RE.finditer(content)]
+    matches += [(m.start(), 'http://' + m.group(0)) for m in BARE_DOMAIN_RE.finditer(content)]
+    matches.sort()
+    urls, seen = [], set()
+    for _, url in matches:
+        url = url.rstrip(TRAILING_PUNCT)
+        if url and url not in seen:
+            seen.add(url)
+            urls.append(url)
+    return urls
 
 # 创建bin
 @app.post("/api/bins", response_model=BinResponse)
@@ -305,7 +330,8 @@ async def list_bins(
             creation_time=row['creation_time'],
             expiration_time=row['expiration_time'],
             content=final_content,
-            truncated=truncated
+            truncated=truncated,
+            urls=extract_urls(row['content'])
         ))
     
     return bins
@@ -367,6 +393,36 @@ async def get_raw_bin(bin_uuid: str):
         raise HTTPException(status_code=404, detail="Not found or expired")
     
     return row['content']
+
+# 静态前端页面与资源
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def static_file(name: str) -> FileResponse:
+    return FileResponse(os.path.join(BASE_DIR, name), headers={"Cache-Control": "no-cache"})
+
+@app.get("/", include_in_schema=False)
+async def index_page():
+    return static_file("index.html")
+
+@app.get("/bin.html", include_in_schema=False)
+async def bin_page():
+    return static_file("bin.html")
+
+@app.get("/index.js", include_in_schema=False)
+async def index_js():
+    return static_file("index.js")
+
+@app.get("/settings.js", include_in_schema=False)
+async def settings_js():
+    return static_file("settings.js")
+
+@app.get("/bin.js", include_in_schema=False)
+async def bin_js():
+    return static_file("bin.js")
+
+@app.get("/msr.woff2", include_in_schema=False)
+async def msr_font():
+    return static_file("msr.woff2")
 
 if __name__ == "__main__":
     init_db()

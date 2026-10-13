@@ -1,0 +1,28 @@
+node_modules/
+.DS_Store
+dist/
+release/
+*.zip
+.pnpm-store/
+
+*.log
+
+.idea/
+.vscode/
+.claude/
+.cursor/
+
+/**/package-lock.json
+.eslintcache
+
+# secrets / credentials — 绝不入库（npm token 等）
+.npmrc
+.env
+.env.*
+*.secrets.json
+token.json
+
+# misc
+_*.md
+docs/
+_.md

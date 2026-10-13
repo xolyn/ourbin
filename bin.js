@@ -69,7 +69,7 @@ document.querySelector('a[title="Copy bin URL"]').onclick = async function() {
     const url = window.location.href;
     try {
         await navigator.clipboard.writeText(url);
-        alert('URL copied to clipboard');
+        if (OurBinSettings.load().alertOnCopy) alert('URL copied to clipboard');
     } catch (err) {
         console.error('Copy failed：', err);
         alert('Copy failed');
@@ -81,7 +81,7 @@ document.querySelector('button[data-icon="copy_all"]').onclick = async function(
     const textarea = document.querySelector('textarea#new');
     try {
         await navigator.clipboard.writeText(textarea.value);
-        alert('Content copied to clipboard');
+        if (OurBinSettings.load().alertOnCopy) alert('Content copied to clipboard');
     } catch (err) {
         console.error('Copy failed：', err);
         alert('Copy failed');
@@ -127,13 +127,13 @@ document.querySelector('button[data-icon="save_as"]').onclick = async function()
 
 // 删除bin
 document.querySelector('button[data-icon="delete"]').onclick = async function() {
-    if (!confirm('Confirm deleting this bin?')) return;
+    if (OurBinSettings.load().confirmOnVoid && !confirm('Confirm deleting this bin?')) return;
     
     try {
         const res = await fetch(`${API_BASE}/bins/${binId}`, { method: 'DELETE' });
         if (res.ok) {
             alert('Delete successful');
-            window.location.href = 'ourbin.html';
+            window.location.href = 'index.html';
         } else {
             alert('Delete failed');
         }

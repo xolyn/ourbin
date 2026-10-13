@@ -1,0 +1,14 @@
+# Taste Notes
+- When running Python apps, use the pyenv environment (e.g. `pyenv` shims/versions) rather than system Python. Confidence: 0.85
+- When a fix is proposed, prefers the assistant to apply it directly ("直接改") rather than only suggesting code. Confidence: 0.8
+- Wants fixes verified to cover all deployment modes (e.g., Docker as well as local `python app.py`) and confirmation that the issue is fully resolved everywhere — though for purely cosmetic UI tweaks he may explicitly tell the assistant to skip verification and verify himself ("改完不用验证, 我来验证即可"). Confidence: 0.7
+- Prefers native HTML5 features over third-party libraries in the frontend (e.g. native `<dialog>`, native color picker input). Confidence: 0.85
+- Attentive to visual details: explicitly calls out alignment requirements (e.g. icons vertically aligned with titles) and wants sensible display of long strings (e.g. truncate long URLs showing ~10 chars at each end with ellipsis in the middle). Confidence: 0.75
+- Prefers conditional/minimal UI: hide controls when they are not applicable (e.g. no link dropdown when only one link exists). Confidence: 0.7
+- Header layout preference: main title at the far left and the settings gear at the far right of the header (widely separated, not adjacent to the title). Confidence: 0.8
+- Prefers auxiliary/secondary UI to live inside the settings panel instead of the main page: the version number (styled de-emphasized — gray, small font, at the very bottom of the panel) and the Danger Zone (destructive actions like Clean Expired / Reset Database) belong in Settings, keeping the main page clean. Also fine dropping hidden-toggle hacks (e.g. double-click-to-reveal) once the section is properly placed. Confidence: 0.8
+- Prefers settings/options UIs organized into labeled sections grouped by function (e.g. "Alert", "Customization"), with section headings visually prominent (slightly larger font) and only config rows inside each section. Confidence: 0.8
+- Comfortable delegating implementation/design choices to the assistant ("按 ux/功能性考虑来自己设计") when multiple valid options exist. Confidence: 0.75
+- Communicates in Chinese; prefers replies in Chinese. Confidence: 0.8
+- When debugging data-dependent bugs, wants the assistant to inspect the real data source (e.g. query the SQLite DB for actual stored contents) instead of guessing from code. Confidence: 0.75
+- When reporting bugs, pastes exact error output (e.g. console ReferenceError with location) and describes concrete symptoms; expects root-cause analysis of why it broke, not just a patch. Confidence: 0.7
