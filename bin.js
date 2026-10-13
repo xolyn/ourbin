@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = '/api';
 const binId = new URLSearchParams(window.location.search).get('id');
 let originalContent = '';
 let binData = null;
@@ -54,7 +54,7 @@ async function loadBin() {
         const rawLink = document.getElementById('viewRawBtn');
         if (rawLink) {
             rawLink.onclick = function() {
-                window.open(`http://localhost:8000/raw/${binId}`, '_blank');
+                window.open(`/raw/${binId}`, '_blank');
             }
         }
 
@@ -68,7 +68,7 @@ async function loadBin() {
 document.querySelector('a[title="Copy bin URL"]').onclick = async function() {
     const url = window.location.href;
     try {
-        await navigator.clipboard.writeText(url);
+        await OurBinClipboard.copy(url);
         if (OurBinSettings.load().alertOnCopy) alert('URL copied to clipboard');
     } catch (err) {
         console.error('Copy failed：', err);
@@ -80,7 +80,7 @@ document.querySelector('a[title="Copy bin URL"]').onclick = async function() {
 document.querySelector('button[data-icon="copy_all"]').onclick = async function() {
     const textarea = document.querySelector('textarea#new');
     try {
-        await navigator.clipboard.writeText(textarea.value);
+        await OurBinClipboard.copy(textarea.value);
         if (OurBinSettings.load().alertOnCopy) alert('Content copied to clipboard');
     } catch (err) {
         console.error('Copy failed：', err);

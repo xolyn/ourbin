@@ -1,41 +1,34 @@
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = '/api';
 
 const importFromClipboard = async function (selector='textarea#new') {
 try {
-    const text = await navigator.clipboard.readText();
+    const text = await OurBinClipboard.read();
     document.querySelector(selector).value = text;
 } catch (err) {
     console.error('读取剪贴板失败：', err);
-    alert('无法读取剪贴板内容，请确保在 HTTPS 页面上，并允许访问剪贴板。');
+    const textarea = document.querySelector(selector);
+    if (textarea) textarea.focus();
+    alert('无法直接读取剪贴板（非 HTTPS 环境），请按 Ctrl+V / Cmd+V 粘贴。');
 }
 };
 
-// 全局Ctrl+V监听
-document.addEventListener('keydown', async function(e) {
-    // 检查是否是Ctrl+V（Mac上是Cmd+V）
-    if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
-        // 检查当前焦点是否在输入框或文本框中
-        const activeElement = document.activeElement;
-        const isInputFocused = activeElement && (
-            activeElement.tagName === 'INPUT' ||
-            activeElement.tagName === 'TEXTAREA' ||
-            activeElement.isContentEditable
-        );
-        
-        // 如果不在输入框中，粘贴到textarea#new
-        if (!isInputFocused) {
-            e.preventDefault();
-            try {
-                const text = await navigator.clipboard.readText();
-                const textarea = document.querySelector('textarea#new');
-                if (textarea) {
-                    textarea.value = text;
-                    textarea.focus();
-                }
-            } catch (err) {
-                console.error('读取剪贴板失败：', err);
-                // 不显示alert，避免干扰用户体验
-            }
+// 全局粘贴监听（原生 paste 事件，非 HTTPS 环境也可用）
+document.addEventListener('paste', function(e) {
+    const activeElement = document.activeElement;
+    const isInputFocused = activeElement && (
+        activeElement.tagName === 'INPUT' ||
+        activeElement.tagName === 'TEXTAREA' ||
+        activeElement.isContentEditable
+    );
+    if (isInputFocused) return;
+
+    const text = e.clipboardData && e.clipboardData.getData('text/plain');
+    if (text) {
+        e.preventDefault();
+        const textarea = document.querySelector('textarea#new');
+        if (textarea) {
+            textarea.value = text;
+            textarea.focus();
         }
     }
 });
@@ -293,7 +286,7 @@ async function copyBinContent(uuid) {
     try {
         const res = await fetch(`${API_BASE}/bins/${uuid}`);
         const bin = await res.json();
-        await navigator.clipboard.writeText(bin.content);
+        await OurBinClipboard.copy(bin.content);
         if (OurBinSettings.load().alertOnCopy) alert('已复制到剪贴板');
     } catch (err) {
         console.error('复制失败：', err);

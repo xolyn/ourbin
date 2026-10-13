@@ -305,13 +305,14 @@
 </footer>
 
 <script src="settings.js"></script>
+<script src="clipboard.js"></script>
 <script src="bin.js"></script>
 
 <script>
     function copyContent() {
         const textarea = document.getElementById('new');
         textarea.select();
-        navigator.clipboard.writeText(textarea.value).then(() => {
+        OurBinClipboard.copy(textarea.value).then(() => {
             // Optional: visual feedback
             const btn = document.querySelector('button[data-icon="copy_all"]');
             const originalText = btn.innerHTML;

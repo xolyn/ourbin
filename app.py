@@ -416,6 +416,10 @@ async def index_js():
 async def settings_js():
     return static_file("settings.js")
 
+@app.get("/clipboard.js", include_in_schema=False)
+async def clipboard_js():
+    return static_file("clipboard.js")
+
 @app.get("/bin.js", include_in_schema=False)
 async def bin_js():
     return static_file("bin.js")
