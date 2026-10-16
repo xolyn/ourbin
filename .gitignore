@@ -26,3 +26,7 @@ token.json
 _*.md
 docs/
 _.md
+
+# tooling / cache
+.commandcode/
+__pycache__/

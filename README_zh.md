@@ -9,23 +9,29 @@
 ### 核心功能
 - ✅ 创建剪贴板内容（支持自定义过期时间，从分钟到永久）
 - ✅ 通过 UUID 访问和编辑剪贴板内容
+- ✅ 别名（为 bin 命名，不必记 UUID）
+- ✅ 置顶重要 bin 到列表顶部
 - ✅ 软删除功能
 - ✅ 列出所有有效的剪贴板内容
 - ✅ 批量操作（选择、删除、续期）
 - ✅ 排序功能（按创建时间、过期时间排序）
+- ✅ 链接检测，多链接内容支持逐个选择打开
 - ✅ 清理已过期的 bin
 - ✅ 数据库重置（带安全确认）
 - ✅ RESTful API 设计
 - ✅ 自动生成 API 文档
 
 ### 前端功能
-- 📋 从剪贴板导入内容
+- 📋 从剪贴板导入内容（非 HTTPS 环境同样可用）
 - 🔍 实时搜索和筛选
 - 📊 显示创建时间和过期时间
 - 🔄 自动刷新列表
 - 📝 在线编辑内容
 - 🔗 一键复制 URL 或内容
 - ⏰ 过期时间显示
+- 📌 卡片和详情页快速置顶 / 取消置顶
+- 🏷️ 卡片显示别名，详情页显示 `<别名> (<UUID>)`
+- 🎨 设置面板：主题色、自定义 CSS、弹窗偏好、永不过期 bin 自动置顶
 
 ## 技术栈
 
@@ -101,7 +107,9 @@ Content-Type: application/json
 
 {
     "content": "剪贴板内容",
-    "expiration_hours": 24  // 支持小数，如 0.083 表示 5 分钟
+    "expiration_hours": 24,  // 支持小数，如 0.083 表示 5 分钟
+    "alias": "我的笔记",      // 可选
+    "pinned": false          // 可选
 }
 ```
 
@@ -111,7 +119,9 @@ Content-Type: application/json
     "uuid": "4cd4a4d332cb",
     "creation_time": 1704067200,
     "content": "剪贴板内容",
-    "expiration_time": 1704153600
+    "expiration_time": 1704153600,
+    "alias": "我的笔记",
+    "pinned": false
 }
 ```
 
@@ -121,12 +131,15 @@ GET /api/bins/{uuid}
 ```
 
 ### 更新剪贴板内容
+所有字段可选，只更新传入的字段。
 ```http
 PUT /api/bins/{uuid}
 Content-Type: application/json
 
 {
-    "content": "新的内容"
+    "content": "新的内容",
+    "alias": "新的别名",   // 传 "" 可清除
+    "pinned": true
 }
 ```
 
@@ -149,6 +162,8 @@ GET /api/bins?sort_by=creation_time&order=desc
 - `sort_by`: 排序字段 (`creation_time`, `expiration_time`)
 - `order`: 排序顺序 (`asc`, `desc`)
 
+置顶的 bin 始终排在最前（组内按创建时间排序），其余按所选排序方式排列。
+
 **响应**:
 ```json
 [
@@ -156,7 +171,11 @@ GET /api/bins?sort_by=creation_time&order=desc
         "uuid": "4cd4a4d332cb",
         "creation_time": 1704067200,
         "expiration_time": 1704153600,
-        "preview": "剪贴板内容预览..."
+        "content": "剪贴板内容预览...",
+        "truncated": false,
+        "urls": ["https://example.com"],
+        "alias": "我的笔记",
+        "pinned": true
     }
 ]
 ```
@@ -194,7 +213,7 @@ GET /api/health
 ```json
 {
     "status": "healthy",
-    "version": "1.0.1"
+    "version": "1.4.1"
 }
 ```
 
@@ -207,9 +226,13 @@ CREATE TABLE bins (
     creation_time INTEGER NOT NULL,
     content TEXT NOT NULL,
     file_path TEXT,
-    expiration_time INTEGER NOT NULL
+    expiration_time INTEGER NOT NULL,
+    alias TEXT,
+    pinned INTEGER NOT NULL DEFAULT 0
 );
 ```
+
+旧数据库会在启动时自动迁移（按需补充 `alias` / `pinned` 列）。
 
 ## 环境变量
 
@@ -230,22 +253,27 @@ CREATE TABLE bins (
 ## 前端使用
 
 ### 主页面 (`index.html`)
-- 创建新的 bin
+- 创建新的 bin（可设置别名、创建时置顶）
 - 查看所有 bin 列表
 - 选择、删除、续期 bin
 - 排序和筛选
-- 从剪贴板导入内容
+- 从剪贴板导入内容（编辑框内 Paste / Clear 按钮）
+- 卡片上快速置顶 / 取消置顶
+- 链接内容一键 Go，多链接可逐个选择打开
 
 ### Bin 详情页 (`bin.html`)
 - 查看 bin 的完整内容
 - 编辑和保存内容
+- 编辑别名（显示为 `<别名> (<UUID>)`，raw URL 仍使用 UUID）
+- 置顶 / 取消置顶
 - 复制 URL 或内容
-- 删除 bin
 
-### 危险区域（Danger Zone）
-双击版本号显示危险操作区域：
-- **Clean up**: 清理所有已过期的 bin
-- **Reset**: 重置数据库（需要输入6位确认ID）
+### 设置
+点击右上角齿轮图标打开设置：
+- **Alert**: 复制提示弹窗、删除二次确认开关
+- **Behavior**: 永不过期的 bin 自动置顶（默认关闭）
+- **Customization**: 主题色、自定义 CSS（覆盖内置样式）
+- **Danger Zone**: 清理和重置工具（版本号也在这里）
 
 ## 过期时间说明
 
@@ -260,12 +288,16 @@ CREATE TABLE bins (
 ourbin/
 ├── app.py              # FastAPI 应用
 ├── index.html          # 主页面
-├── bin.html           # Bin 详情页
-├── common.css         # 公共样式
-├── requirements.txt   # Python 依赖
-├── Dockerfile         # Docker 镜像定义
-├── docker-compose.yml # Docker Compose 配置
-└── README.md          # 项目文档
+├── bin.html            # Bin 详情页
+├── index.js            # 主页面逻辑
+├── bin.js              # 详情页逻辑
+├── settings.js         # 设置（localStorage）、主题与自定义 CSS
+├── clipboard.js        # 剪贴板工具（含非 HTTPS 回退）
+├── msr.woff2           # 图标字体
+├── requirements.txt    # Python 依赖
+├── Dockerfile          # Docker 镜像定义
+├── docker-compose.yml  # Docker Compose 配置
+└── README.md           # 项目文档
 ```
 
 ### 本地开发
@@ -277,7 +309,7 @@ pip install -r requirements.txt
 python app.py
 
 # 访问前端
-# 打开 index.html 或通过 Web 服务器访问
+# 打开 http://localhost:8000（前端由应用直接提供）
 ```
 
 ## 许可证

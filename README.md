@@ -11,23 +11,29 @@
 ### Core Features
 - ✅ Create clipboard content (supports custom expiration time, from minutes to permanent)
 - ✅ Access and edit clipboard content via UUID
+- ✅ Alias (name a bin instead of remembering its UUID)
+- ✅ Pin important bins to the top of the list
 - ✅ Soft delete functionality
 - ✅ List all valid clipboard content
 - ✅ Batch operations (select, delete, renew)
 - ✅ Sorting functionality (by creation time, expiration time)
+- ✅ Link detection with a per-link Go picker for multi-link content
 - ✅ Clean up expired bins
 - ✅ Database reset (with security confirmation)
 - ✅ RESTful API design
 - ✅ Auto-generated API documentation
 
 ### Frontend Features
-- 📋 Import content from clipboard
+- 📋 Import content from clipboard (works on plain HTTP as well)
 - 🔍 Real-time search and filtering
 - 📊 Display creation time and expiration time
 - 🔄 Auto-refresh list
 - 📝 Online content editing
 - 🔗 One-click copy URL or content
 - ⏰ Expiration time display
+- 📌 Quick pin / unpin from the card or the detail page
+- 🏷️ Aliases shown on cards, full `<alias> (<uuid>)` on the detail page
+- 🎨 Settings panel: theme color, custom CSS, alert preferences, auto-pin for never-expiring bins
 
 ## Tech Stack
 
@@ -103,7 +109,9 @@ Content-Type: application/json
 
 {
     "content": "Clipboard content",
-    "expiration_hours": 24  // Supports decimals, e.g., 0.083 means 5 minutes
+    "expiration_hours": 24,  // Supports decimals, e.g., 0.083 means 5 minutes
+    "alias": "My note",      // Optional
+    "pinned": false          // Optional
 }
 ```
 
@@ -113,7 +121,9 @@ Content-Type: application/json
     "uuid": "4cd4a4d332cb",
     "creation_time": 1704067200,
     "content": "Clipboard content",
-    "expiration_time": 1704153600
+    "expiration_time": 1704153600,
+    "alias": "My note",
+    "pinned": false
 }
 ```
 
@@ -123,12 +133,15 @@ GET /api/bins/{uuid}
 ```
 
 ### Update Clipboard Content
+All fields are optional; only the provided ones are updated.
 ```http
 PUT /api/bins/{uuid}
 Content-Type: application/json
 
 {
-    "content": "New content"
+    "content": "New content",
+    "alias": "New alias",   // Set to "" to clear
+    "pinned": true
 }
 ```
 
@@ -151,6 +164,8 @@ GET /api/bins?sort_by=creation_time&order=desc
 - `sort_by`: Sort field (`creation_time`, `expiration_time`)
 - `order`: Sort order (`asc`, `desc`)
 
+Pinned bins always come first (ordered by creation time among themselves), followed by the rest sorted as requested.
+
 **Response**:
 ```json
 [
@@ -158,7 +173,11 @@ GET /api/bins?sort_by=creation_time&order=desc
         "uuid": "4cd4a4d332cb",
         "creation_time": 1704067200,
         "expiration_time": 1704153600,
-        "preview": "Clipboard content preview..."
+        "content": "Clipboard content preview...",
+        "truncated": false,
+        "urls": ["https://example.com"],
+        "alias": "My note",
+        "pinned": true
     }
 ]
 ```
@@ -196,7 +215,7 @@ GET /api/health
 ```json
 {
     "status": "healthy",
-    "version": "1.0.1"
+    "version": "1.4.1"
 }
 ```
 
@@ -209,9 +228,13 @@ CREATE TABLE bins (
     creation_time INTEGER NOT NULL,
     content TEXT NOT NULL,
     file_path TEXT,
-    expiration_time INTEGER NOT NULL
+    expiration_time INTEGER NOT NULL,
+    alias TEXT,
+    pinned INTEGER NOT NULL DEFAULT 0
 );
 ```
+
+Existing databases are migrated automatically at startup (`alias` / `pinned` columns are added on demand).
 
 ## Environment Variables
 
@@ -232,22 +255,27 @@ Database file is saved in `ourbin.db` in the project root directory (or the path
 ## Frontend Usage
 
 ### Main Page (`index.html`)
-- Create new bins
+- Create new bins (optional alias, pin-on-create)
 - View all bin list
 - Select, delete, renew bins
 - Sort and filter
-- Import content from clipboard
+- Import content from clipboard (Paste / Clear buttons inside the editor)
+- Quick pin / unpin from a bin card
+- One-click Go for link content, per-link picker for multiple links
 
 ### Bin Detail Page (`bin.html`)
 - View complete bin content
 - Edit and save content
+- Edit the alias (shown as `<alias> (<uuid>)`, the raw URL keeps using the UUID)
+- Pin / unpin
 - Copy URL or content
-- Delete bin
 
-### Danger Zone
-Double-click the version number to show the danger zone:
-- **Clean up**: Clean all expired bins
-- **Reset**: Reset database (requires 6-digit confirmation ID)
+### Settings
+Open settings via the gear icon at the top right:
+- **Alert**: toggle the copy confirmation and the void confirmation dialogs
+- **Behavior**: auto-pin never-expiring bins (off by default)
+- **Customization**: theme color and custom CSS (overrides built-in styles)
+- **Danger Zone**: cleanup and reset tools (also holds the version number)
 
 ## Expiration Time Notes
 
@@ -262,12 +290,16 @@ Double-click the version number to show the danger zone:
 ourbin/
 ├── app.py              # FastAPI application
 ├── index.html          # Main page
-├── bin.html           # Bin detail page
-├── common.css         # Common styles
-├── requirements.txt   # Python dependencies
-├── Dockerfile         # Docker image definition
-├── docker-compose.yml # Docker Compose configuration
-└── README.md          # Project documentation
+├── bin.html            # Bin detail page
+├── index.js            # Main page logic
+├── bin.js              # Detail page logic
+├── settings.js         # Settings (localStorage) & theme / custom CSS
+├── clipboard.js        # Clipboard helpers (with non-HTTPS fallback)
+├── msr.woff2           # Icon font
+├── requirements.txt    # Python dependencies
+├── Dockerfile          # Docker image definition
+├── docker-compose.yml  # Docker Compose configuration
+└── README.md           # Project documentation
 ```
 
 ### Local Development
@@ -279,7 +311,7 @@ pip install -r requirements.txt
 python app.py
 
 # Access frontend
-# Open index.html or access through a web server
+# Open http://localhost:8000 (served by the app itself)
 ```
 
 ## License
