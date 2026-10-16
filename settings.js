@@ -3,7 +3,9 @@ const OurBinSettings = (() => {
     const DEFAULTS = {
         alertOnCopy: true,
         confirmOnVoid: true,
-        themeColor: '#1A1A1A'
+        autoPinNeverExpire: false,
+        themeColor: '#1A1A1A',
+        customCss: ''
     };
 
     function load() {
@@ -18,6 +20,7 @@ const OurBinSettings = (() => {
         const next = { ...load(), ...patch };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
         applyTheme(next.themeColor);
+        applyCustomCss(next.customCss);
         return next;
     }
 
@@ -39,7 +42,21 @@ const OurBinSettings = (() => {
         root.style.setProperty('--primary-hover', lighten(color, 0.15));
     }
 
-    applyTheme(load().themeColor);
+    // 自定义 CSS 通过 <style>.textContent 注入，不经过 HTML 解析，
+    // 因此 "</style><script>" 之类的注入无法逃逸出样式上下文；CSS 本身在现代浏览器无法执行脚本
+    function applyCustomCss(css) {
+        let el = document.getElementById('ourbin-user-css');
+        if (!el) {
+            el = document.createElement('style');
+            el.id = 'ourbin-user-css';
+            document.head.appendChild(el);
+        }
+        el.textContent = css || '';
+    }
 
-    return { load, save, applyTheme, DEFAULTS };
+    const initial = load();
+    applyTheme(initial.themeColor);
+    applyCustomCss(initial.customCss);
+
+    return { load, save, applyTheme, applyCustomCss, DEFAULTS };
 })();

@@ -38,5 +38,21 @@ const OurBinClipboard = (() => {
         return Promise.reject(new Error('Clipboard read unavailable'));
     }
 
-    return { copy, read };
+    // 读取剪贴板并写入输入框；读不到时聚焦并提示手动粘贴
+    function pasteInto(el) {
+        return read().then(text => {
+            el.value = text;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+        }).catch(() => {
+            el.focus();
+            alert('Cannot read clipboard directly (non-HTTPS). Press Ctrl+V / Cmd+V to paste.');
+        });
+    }
+
+    function clearInto(el) {
+        el.value = '';
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    return { copy, read, pasteInto, clearInto };
 })();

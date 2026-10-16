@@ -69,7 +69,7 @@
 
         /* Layout */
         .app-container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 2rem 1.5rem;
             display: flex;
@@ -121,6 +121,48 @@
             color: var(--text-main);
         }
 
+        .bin-title {
+            display: flex;
+            align-items: baseline;
+            gap: 0.35rem;
+            min-width: 0;
+        }
+
+        .uuid-ghost {
+            font-family: monospace;
+            color: var(--text-secondary);
+            font-size: 0.5em;
+            font-weight: normal;
+            letter-spacing: 0;
+        }
+
+        .edit-alias-btn {
+            text-decoration: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.2s;
+            font-size: 0.8em;
+            margin-left: 0.2em;
+        }
+
+        .edit-alias-btn:hover {
+            color: var(--text-main);
+        }
+
+        .alias-input {
+            border: none;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 1.5rem;
+            font-weight: 600;
+            font-family: inherit;
+            letter-spacing: -0.025em;
+            outline: none;
+            background: transparent;
+            color: var(--text-main);
+            width: 14rem;
+            padding: 0;
+        }
+
         /* Metadata Card */
         .meta-card {
             background: var(--card-bg);
@@ -161,20 +203,44 @@
         textarea#new {
             width: 100%;
             min-height: 400px; /* Taller for detail view */
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-sm);
             font-family: monospace;
             font-size: 0.9rem;
             resize: vertical;
             outline: none;
             transition: border-color 0.2s;
-            background: #FAFAFA;
         }
 
-        textarea#new:focus {
+        /* textarea 外框：按钮行位于内部底部 */
+        .textarea-box {
+            width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+            background: #FAFAFA;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .textarea-box:focus-within {
             border-color: var(--text-main);
             background: #FFF;
+        }
+
+        .textarea-box textarea#new {
+            border: none;
+            border-radius: 0;
+            background: transparent;
+            padding: 0.75rem;
+        }
+
+        .textarea-actions {
+            display: flex;
+            gap: 5px;
+            justify-content: flex-end;
+            align-items: center;
         }
 
         /* Buttons */
@@ -218,6 +284,17 @@
         button.danger:hover:not(:disabled), button.red:hover:not(:disabled) {
             background-color: #FEF2F2;
             border-color: var(--danger-color);
+        }
+
+        button.pinned {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        button.pinned:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
         }
 
         button.disabled, button:disabled {
@@ -268,9 +345,10 @@
     <header>
         <h1>
             <a href='javascript:history.back()' class="back-btn icon" data-icon="arrow_circle_left" title="Back"></a>
-            <span style="font-family: monospace;">#<span id="binId">...</span></span>
+            <span class="bin-title" id="binTitle"><span style="font-family: monospace;">#<span id="binId">...</span></span></span>
+            <input id="aliasInput" class="alias-input" hidden placeholder="Alias">
+            <a class="edit-alias-btn icon" data-icon="edit" title="Edit alias" onclick="editAlias()"></a>
             <a class="copy-url-btn icon" title="Copy bin URL" data-icon="content_copy" style="font-size: 0.8em; margin-left: 0.2em;"></a>
-            
         </h1>
     </header>
 
@@ -287,11 +365,18 @@
     </div>
 
     <div class="editor-card">
-        <textarea id="new" placeholder="Loading content..."></textarea>
+        <div class="textarea-box">
+            <textarea id="new" placeholder="Loading content..."></textarea>
+            <div class="textarea-actions">
+                <button data-icon="content_paste_go" onclick="OurBinClipboard.pasteInto(document.getElementById('new'))">Paste</button>
+                <button class="red" data-icon="delete" onclick="OurBinClipboard.clearInto(document.getElementById('new'))">Clear</button>
+            </div>
+        </div>
         
         <div class="button_group">
             <button data-icon="copy_all" onclick="copyContent()">Copy all</button> 
             <button data-icon="article_shortcut" class="raw-btn" id="viewRawBtn" title="View Raw" onclick="viewRaw()">Raw</button> 
+            <button data-icon="keep" id="pin_btn">Pin</button>
             
             <button data-icon="save_as" class="disabled spacer" id="save_btn">Save edited</button>
             

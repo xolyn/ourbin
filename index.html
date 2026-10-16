@@ -79,7 +79,7 @@
         }
         /* Layout */
         .app-container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 2rem 1.5rem;
             display: flex;
@@ -142,8 +142,9 @@
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-md);
             padding: 1.25rem 1.5rem;
-            min-width: 640px;
-            max-width: calc(100vw - 2rem);
+            width: clamp(260px, calc(100vw - 2rem), 640px);
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
             font-family: var(--font-main);
         }
 
@@ -229,6 +230,31 @@
             cursor: pointer;
         }
 
+        .settings-row.column {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+        }
+
+        .css-textarea {
+            width: 100%;
+            min-height: 6rem;
+            max-height: 40vh;
+            resize: vertical;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-family: monospace;
+            font-size: 0.8rem;
+            background: var(--bg-color);
+            color: var(--text-main);
+            outline: none;
+        }
+
+        .css-textarea:focus {
+            border-color: var(--text-main);
+        }
+
         /* Go button link dropdown */
         .go-group {
             position: relative;
@@ -292,7 +318,7 @@
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-sm);
-            padding: 1.25rem;
+            padding: .75rem;
             display: flex;
             flex-direction: column;
             gap: 1rem;
@@ -301,20 +327,44 @@
         textarea#new {
             width: 100%;
             min-height: 150px;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-sm);
             font-family: monospace;
             font-size: 0.9rem;
             resize: vertical;
             outline: none;
             transition: border-color 0.2s;
-            background: #FAFAFA;
         }
 
-        textarea#new:focus {
+        /* textarea 外框：按钮行位于内部底部 */
+        .textarea-box {
+            width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+            background: #FAFAFA;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .textarea-box:focus-within {
             border-color: var(--text-main);
             background: #FFF;
+        }
+
+        .textarea-box textarea#new {
+            border: none;
+            border-radius: 0;
+            background: transparent;
+            padding: 0.75rem;
+        }
+
+        .textarea-actions {
+            display: flex;
+            gap: 5px;
+            justify-content: flex-end;
+            align-items: center;
         }
 
         .editor-toolbar {
@@ -353,6 +403,33 @@
             outline-offset: 1px;
         }
 
+        input#new_alias {
+            padding: 0.35rem 0.6rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-size: 0.85rem;
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            flex: 1;
+            min-width: 0;
+        }
+
+        input#new_alias:focus {
+            outline: 2px solid var(--border-color);
+            outline-offset: 1px;
+        }
+
+        .pin-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+
         button {
             display: inline-flex;
             align-items: center;
@@ -366,7 +443,8 @@
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
-            color: var(--text-main);
+            /* color: var(--text-main); */
+            color: var(--primary-color);
         }
 
         button:hover:not(:disabled) {
@@ -396,6 +474,17 @@
         button.danger:hover:not(:disabled), button.red:hover:not(:disabled) {
             background-color: #FEF2F2;
             border-color: var(--danger-color);
+        }
+
+        button.pinned {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        button.pinned:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
         }
 
         button.disabled, button:disabled {
@@ -480,7 +569,7 @@
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
-            padding: 1rem;
+            padding: .75rem;
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
@@ -558,7 +647,7 @@
             border: 1px dashed var(--danger-color);
             border-radius: var(--radius-md);
             background-color: #FEF2F2;
-            padding: 1rem;
+            padding: .75rem;
         }
 
         .settings-section.danger h3 {
@@ -641,15 +730,21 @@
 
 <div class="app-container">
     <header>
-        <h1>OurBin</h1>
+        <h1 style="color: var(--primary-color)">OurBin</h1>
         <button class="gear-btn" data-icon="settings" title="Settings" onclick="openSettings()"></button>
     </header>
 
     <div class="editor-card">
-        <textarea id="new" placeholder="Type or paste content here..."></textarea>
+        <div class="textarea-box">
+            <textarea id="new" placeholder="Type or paste content here..."></textarea>
+            <div class="textarea-actions">
+                <button data-icon="content_paste_go" onclick="OurBinClipboard.pasteInto(document.getElementById('new'))">Paste</button>
+                <button class="red" data-icon="delete" onclick="OurBinClipboard.clearInto(document.getElementById('new'))">Clear</button>
+            </div>
+        </div>
+        <input id="new_alias" placeholder="Alias (optional)" style="width: 100%; max-width: 100%;">
         <div class="editor-toolbar">
             <div class="editor-actions">
-                <button onclick="importFromClipboard()" data-icon="content_paste_go">Paste</button>
                 <select id="expiration">
                     <option disabled>Expiration</option>
                     <option value="1">1 min</option>
@@ -665,6 +760,7 @@
                     <option value="10080">1 w</option>
                     <option value="-1">Never</option>
                 </select>
+                <label class="pin-toggle"><input type="checkbox" id="new_pin"> Pin</label>
             </div>
             <button class="primary" data-icon="order_approve">Create Bin</button>
         </div>
@@ -719,13 +815,22 @@
         <div class="settings-row">
             <label>
                 <input type="checkbox" id="cfg_alert_on_copy" onchange="saveSettings()">
-                Alert after copy
+                Alert upon copying
             </label>
         </div>
         <div class="settings-row">
             <label>
                 <input type="checkbox" id="cfg_confirm_on_void" onchange="saveSettings()">
-                Confirm before void
+                Confirm upon voiding
+            </label>
+        </div>
+    </section>
+    <section class="settings-section">
+        <h3>Behavior</h3>
+        <div class="settings-row">
+            <label>
+                <input type="checkbox" id="cfg_auto_pin" onchange="saveSettings()">
+                Auto-pin never-expiring bins (Take effect on new creations only)
             </label>
         </div>
     </section>
@@ -734,6 +839,10 @@
         <div class="settings-row">
             <label for="cfg_theme_color">Theme color</label>
             <input type="color" id="cfg_theme_color" oninput="saveSettings()">
+        </div>
+        <div class="settings-row column">
+            <label for="cfg_custom_css">Custom CSS (overrides built-in styles)</label>
+            <textarea id="cfg_custom_css" class="css-textarea" placeholder="body { /* your CSS here */ }" spellcheck="false" oninput="saveSettings()"></textarea>
         </div>
     </section>
     <section class="settings-section danger">
@@ -748,7 +857,7 @@
     </div>
 </dialog>
 
-<footer style="background-color: var(--bg-color); position: fixed; bottom: 0; padding: .5rem 0; width: 100%; left:0; box-sizing: border-box; text-align: center; font-size: x-small;">
+<footer style="background-color: var(--bg-color); position: fixed; bottom: 0; padding: 0.5rem 0; width: 100%; left:0; box-sizing: border-box; text-align: center; font-size: x-small;">
     <a href="http://github.com/xolyn/ourbin">OurBin</a> is a opensource LAN clipboard, powered by <a href="https://zhoulingyu.net" target="_blank">Uygnil</a>
 </footer>
 

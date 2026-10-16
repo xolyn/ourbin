@@ -6,6 +6,100 @@ let binData = null;
 document.getElementById('binId').textContent = binId;
 document.title=`Bin #${binId}`;
 
+// 渲染标题：有别名显示 <alias> (<uuid>)，否则显示 #<uuid>
+function renderTitle() {
+    const el = document.getElementById('binTitle');
+    el.textContent = '';
+    if (binData && binData.alias) {
+        el.append(document.createTextNode(binData.alias + ' '));
+        const ghost = document.createElement('span');
+        ghost.className = 'uuid-ghost';
+        ghost.textContent = `(${binId})`;
+        el.append(ghost);
+    } else {
+        const mono = document.createElement('span');
+        mono.style.fontFamily = 'monospace';
+        mono.textContent = '#' + binId;
+        el.append(mono);
+    }
+    document.title = (binData && binData.alias) ? `${binData.alias} (#${binId})` : `Bin #${binId}`;
+}
+
+// 别名编辑
+function editAlias() {
+    const titleEl = document.getElementById('binTitle');
+    const input = document.getElementById('aliasInput');
+    input.value = (binData && binData.alias) || '';
+    titleEl.hidden = true;
+    input.hidden = false;
+    input.focus();
+    input.select();
+}
+
+function closeAliasEdit() {
+    document.getElementById('aliasInput').hidden = true;
+    document.getElementById('binTitle').hidden = false;
+}
+
+async function saveAlias() {
+    const input = document.getElementById('aliasInput');
+    try {
+        const res = await fetch(`${API_BASE}/bins/${binId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ alias: input.value.trim() })
+        });
+        if (res.ok) {
+            binData = await res.json();
+            closeAliasEdit();
+            renderTitle();
+        } else {
+            alert('Alias save failed');
+        }
+    } catch (err) {
+        console.error('Alias save failed：', err);
+        alert('Alias save failed：' + err.message);
+    }
+}
+
+document.getElementById('aliasInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        saveAlias();
+    } else if (e.key === 'Escape') {
+        closeAliasEdit();
+    }
+});
+document.getElementById('aliasInput').addEventListener('blur', closeAliasEdit);
+
+// 置顶/取消置顶
+function updatePinButton() {
+    const btn = document.getElementById('pin_btn');
+    const pinned = binData ? binData.pinned : false;
+    btn.textContent = pinned ? 'Unpin' : 'Pin';
+    btn.classList.toggle('pinned', pinned);
+}
+
+document.getElementById('pin_btn').onclick = async function() {
+    const pinned = binData ? binData.pinned : false;
+    try {
+        const res = await fetch(`${API_BASE}/bins/${binId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pinned: !pinned })
+        });
+        if (res.ok) {
+            binData = await res.json();
+            updatePinButton();
+        } else {
+            alert('Pin failed');
+        }
+    } catch (err) {
+        console.error('Pin failed：', err);
+        alert('Pin failed：' + err.message);
+    }
+};
+
 // 格式化时间戳
 function formatTimestamp(timestamp) {
     const date = new Date(timestamp * 1000);
@@ -57,6 +151,9 @@ async function loadBin() {
                 window.open(`/raw/${binId}`, '_blank');
             }
         }
+
+        renderTitle();
+        updatePinButton();
 
     } catch (err) {
         console.error('Loading failed：', err);

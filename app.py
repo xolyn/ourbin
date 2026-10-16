@@ -32,15 +32,21 @@ TABLE_NAME="bins"
 class BinCreate(BaseModel):
     content: str
     expiration_hours: float = 24  # 默认24小时过期，支持小数（如0.083表示5分钟）
+    alias: Optional[str] = None
+    pinned: bool = False
 
 class BinUpdate(BaseModel):
-    content: str
+    content: Optional[str] = None
+    alias: Optional[str] = None
+    pinned: Optional[bool] = None
 
 class BinResponse(BaseModel):
     uuid: str
     creation_time: int
     content: str
     expiration_time: int
+    alias: Optional[str] = None
+    pinned: bool = False
 
 class BinListItem(BaseModel):
     uuid: str
@@ -49,6 +55,8 @@ class BinListItem(BaseModel):
     content: str
     truncated: bool = False
     urls: List[str] = []
+    alias: Optional[str] = None
+    pinned: bool = False
 
 class BinRenew(BaseModel):
     uuids: List[str]  # UUID列表
@@ -68,9 +76,17 @@ def init_db():
             creation_time INTEGER NOT NULL,
             content TEXT NOT NULL,
             file_path TEXT,
-            expiration_time INTEGER NOT NULL
+            expiration_time INTEGER NOT NULL,
+            alias TEXT,
+            pinned INTEGER NOT NULL DEFAULT 0
         )
     ''')
+    # 兼容旧库：补充新增列
+    existing = {row[1] for row in cursor.execute(f'PRAGMA table_info({TABLE_NAME})')}
+    if 'alias' not in existing:
+        cursor.execute(f'ALTER TABLE {TABLE_NAME} ADD COLUMN alias TEXT')
+    if 'pinned' not in existing:
+        cursor.execute(f'ALTER TABLE {TABLE_NAME} ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0')
     conn.commit()
     conn.close()
 
@@ -87,25 +103,16 @@ def get_db():
 def generate_uuid():
     return str(uuid.uuid4())[:14].replace('-', '')  # 生成14位UUID
 
-# 从内容中提取所有链接（用于前端多链接下拉选择）
+# 从内容中提取所有链接（用于前端多链接下拉选择），只识别带协议的 URL
 # URL 字符集中排除空白、引号括号尖括号以及 CJK/全角字符（避免把紧贴 URL 的中文吞进去）
 URL_BODY = r'[^\s<>"\'()\[\]{}\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]+'
 URL_IN_TEXT_RE = re.compile(r'https?://' + URL_BODY, re.IGNORECASE)
-BARE_DOMAIN_RE = re.compile(
-    r'(?<![\w/.@-])(?:[\w-]+\.)+'
-    r'(?:com|net|org|edu|gov|io|co|me|ai|dev|app|cn|top|xyz|info|site|tech|cloud|store|online|uk|de|jp|kr|ru|fr|tv|cc)'
-    r'(?:/' + URL_BODY + r')?',
-    re.IGNORECASE
-)
 TRAILING_PUNCT = '.,;:!?，。；：！？、）)]}\'"'
 
 def extract_urls(content: str) -> List[str]:
-    matches = [(m.start(), m.group(0)) for m in URL_IN_TEXT_RE.finditer(content)]
-    matches += [(m.start(), 'http://' + m.group(0)) for m in BARE_DOMAIN_RE.finditer(content)]
-    matches.sort()
     urls, seen = [], set()
-    for _, url in matches:
-        url = url.rstrip(TRAILING_PUNCT)
+    for m in URL_IN_TEXT_RE.finditer(content):
+        url = m.group(0).rstrip(TRAILING_PUNCT)
         if url and url not in seen:
             seen.add(url)
             urls.append(url)
@@ -117,13 +124,15 @@ async def create_bin(bin_data: BinCreate):
     creation_time = int(datetime.now().timestamp())
     expiration_time = creation_time + (bin_data.expiration_hours * 3600)
     bin_uuid = generate_uuid()
+    alias = bin_data.alias.strip() if bin_data.alias else None
+    pinned = 1 if bin_data.pinned else 0
     
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO bins (uuid, creation_time, content, expiration_time)
-        VALUES (?, ?, ?, ?)
-    ''', (bin_uuid, creation_time, bin_data.content, expiration_time))
+        INSERT INTO bins (uuid, creation_time, content, expiration_time, alias, pinned)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (bin_uuid, creation_time, bin_data.content, expiration_time, alias or None, pinned))
     conn.commit()
     conn.close()
     
@@ -131,7 +140,9 @@ async def create_bin(bin_data: BinCreate):
         uuid=bin_uuid,
         creation_time=creation_time,
         content=bin_data.content,
-        expiration_time=expiration_time
+        expiration_time=expiration_time,
+        alias=alias or None,
+        pinned=bool(pinned)
     )
 
 # 获取bin详情
@@ -140,7 +151,7 @@ async def get_bin(bin_uuid: str):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT uuid, creation_time, content, expiration_time
+        SELECT uuid, creation_time, content, expiration_time, alias, pinned
         FROM bins
         WHERE uuid = ? AND expiration_time > ?
     ''', (bin_uuid, int(datetime.now().timestamp())))
@@ -155,7 +166,9 @@ async def get_bin(bin_uuid: str):
         uuid=row['uuid'],
         creation_time=row['creation_time'],
         content=row['content'],
-        expiration_time=row['expiration_time']
+        expiration_time=row['expiration_time'],
+        alias=row['alias'],
+        pinned=bool(row['pinned'])
     )
 
 # 批量续期1天
@@ -199,7 +212,7 @@ async def renew_bins(bin_data: BinRenew):
     
     return {"message": "Renewed successfully", "updated_count": updated_count}
 
-# 更新bin
+# 更新bin（content / alias / pinned 按需更新）
 @app.put("/api/bins/{bin_uuid}", response_model=BinResponse)
 async def update_bin(bin_uuid: str, bin_data: BinUpdate):
     conn = get_db()
@@ -207,7 +220,7 @@ async def update_bin(bin_uuid: str, bin_data: BinUpdate):
     
     # 检查bin是否存在且未过期
     cursor.execute('''
-        SELECT uuid, creation_time, expiration_time
+        SELECT uuid, creation_time, content, expiration_time, alias, pinned
         FROM bins
         WHERE uuid = ? AND expiration_time > ?
     ''', (bin_uuid, int(datetime.now().timestamp())))
@@ -217,21 +230,32 @@ async def update_bin(bin_uuid: str, bin_data: BinUpdate):
         conn.close()
         raise HTTPException(status_code=404, detail="Not found or expired")
     
-    # 更新内容
-    cursor.execute('''
-        UPDATE bins
-        SET content = ?
-        WHERE uuid = ?
-    ''', (bin_data.content, bin_uuid))
+    updates = {}
+    if bin_data.content is not None:
+        updates['content'] = bin_data.content
+    if bin_data.alias is not None:
+        alias = bin_data.alias.strip()
+        updates['alias'] = alias or None
+    if bin_data.pinned is not None:
+        updates['pinned'] = 1 if bin_data.pinned else 0
     
-    conn.commit()
+    if updates:
+        set_clause = ', '.join(f'{col} = ?' for col in updates)
+        cursor.execute(f'''
+            UPDATE bins
+            SET {set_clause}
+            WHERE uuid = ?
+        ''', list(updates.values()) + [bin_uuid])
+        conn.commit()
     conn.close()
     
     return BinResponse(
         uuid=bin_uuid,
         creation_time=row['creation_time'],
-        content=bin_data.content,
-        expiration_time=row['expiration_time']
+        content=updates.get('content', row['content']),
+        expiration_time=row['expiration_time'],
+        alias=updates.get('alias', row['alias']),
+        pinned=bool(updates.get('pinned', row['pinned']))
     )
 
 # 软删除bin（修改过期时间）
@@ -281,11 +305,11 @@ async def list_bins(
     if order not in ["asc", "desc"]:
         order = "desc"
     
-    # 构建SQL查询
-    order_clause = f"ORDER BY {sort_by} {order.upper()}"
+    # 构建SQL查询：置顶的排最前（组内按创建时间），其余按所选排序
+    order_clause = f"ORDER BY pinned DESC, CASE WHEN pinned = 1 THEN creation_time ELSE {sort_by} END {order.upper()}"
     
     cursor.execute(f'''
-        SELECT uuid, creation_time, content, expiration_time
+        SELECT uuid, creation_time, content, expiration_time, alias, pinned
         FROM bins
         WHERE expiration_time > ?
         {order_clause}
@@ -296,9 +320,8 @@ async def list_bins(
     
     bins = []
     
-    # URL 匹配正则（简单的）
+    # URL 匹配正则（只识别带协议的 URL，不自动补 http://）
     url_pattern = re.compile(r'^https?:\/\/[\w\.-]+(\.[\w\.-]+)+([\/\w \.\-]*)*\/?$', re.IGNORECASE)
-    url_without_protocol_pattern = re.compile(r'^[\w\.-]+(\.[\w\.-]+)+([\/\w \.\-]*)*\/?$', re.IGNORECASE)
 
     for row in rows:
         content = row['content']
@@ -308,16 +331,13 @@ async def list_bins(
         final_content = content
         truncated = False
         
-        # 检查是否为URL (完整逻辑)
+        # 整个内容就是一个URL时返回完整内容（不截断）
         is_url = False
         # 排除包含空格换行且长度不太离谱的
         if not (' ' in trimmed_content or '\n' in trimmed_content or '\r' in trimmed_content) and len(trimmed_content) < 2048:
             if url_pattern.match(trimmed_content):
                 is_url = True
                 final_content = trimmed_content # URL 返回完整内容
-            elif url_without_protocol_pattern.match(trimmed_content):
-                is_url = True
-                final_content = 'http://' + trimmed_content # URL 返回完整内容(带协议)
         
         # 如果不是URL，则截断
         if not is_url:
@@ -331,7 +351,9 @@ async def list_bins(
             expiration_time=row['expiration_time'],
             content=final_content,
             truncated=truncated,
-            urls=extract_urls(row['content'])
+            urls=extract_urls(row['content']),
+            alias=row['alias'],
+            pinned=bool(row['pinned'])
         ))
     
     return bins

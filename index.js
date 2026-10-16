@@ -1,17 +1,5 @@
 const API_BASE = '/api';
 
-const importFromClipboard = async function (selector='textarea#new') {
-try {
-    const text = await OurBinClipboard.read();
-    document.querySelector(selector).value = text;
-} catch (err) {
-    console.error('读取剪贴板失败：', err);
-    const textarea = document.querySelector(selector);
-    if (textarea) textarea.focus();
-    alert('无法直接读取剪贴板（非 HTTPS 环境），请按 Ctrl+V / Cmd+V 粘贴。');
-}
-};
-
 // 全局粘贴监听（原生 paste 事件，非 HTTPS 环境也可用）
 document.addEventListener('paste', function(e) {
     const activeElement = document.activeElement;
@@ -40,7 +28,7 @@ async function loadVersion() {
         const data = await res.json();
         document.getElementById('version').textContent = data.version;
     } catch (err) {
-        console.error('获取版本号失败：', err);
+        console.error('Failed to load version:', err);
     }
 }
 
@@ -61,7 +49,9 @@ function openSettings() {
     const s = OurBinSettings.load();
     document.getElementById('cfg_alert_on_copy').checked = s.alertOnCopy;
     document.getElementById('cfg_confirm_on_void').checked = s.confirmOnVoid;
+    document.getElementById('cfg_auto_pin').checked = s.autoPinNeverExpire;
     document.getElementById('cfg_theme_color').value = s.themeColor;
+    document.getElementById('cfg_custom_css').value = s.customCss || '';
     document.getElementById('settings_dialog').showModal();
 }
 
@@ -69,7 +59,9 @@ function saveSettings() {
     OurBinSettings.save({
         alertOnCopy: document.getElementById('cfg_alert_on_copy').checked,
         confirmOnVoid: document.getElementById('cfg_confirm_on_void').checked,
-        themeColor: document.getElementById('cfg_theme_color').value
+        autoPinNeverExpire: document.getElementById('cfg_auto_pin').checked,
+        themeColor: document.getElementById('cfg_theme_color').value,
+        customCss: document.getElementById('cfg_custom_css').value
     });
 }
 
@@ -147,7 +139,8 @@ async function refresh() {
                         <div class="go-menu">${menuItems}</div>
                     </span>`;
             }
-            buttonsHtml += `<button style="margin-left:auto" data-icon="delete" class="red" onclick="deleteBin('${bin.uuid}')">Void</button>`;
+            buttonsHtml += `<button style="margin-left:auto" data-icon="keep" class="${bin.pinned ? 'pinned' : ''}" onclick="togglePin('${bin.uuid}', ${bin.pinned})">${bin.pinned ? 'Unpin' : 'Pin'}</button>`;
+            buttonsHtml += `<button data-icon="delete" class="red" onclick="deleteBin('${bin.uuid}')">Void</button>`;
             
             // 处理内容显示
             let contentHtml = escapeHtml(bin.content);
@@ -156,10 +149,13 @@ async function refresh() {
                 previewClass += ' truncated'; // 添加 CSS 类用于显示省略号
             }
 
+            const displayName = bin.alias ? escapeHtml(bin.alias) : bin.uuid;
+            const titleAttr = bin.alias ? ` title="${escapeHtml(bin.uuid)}"` : '';
+
             binDiv.innerHTML = `
                 <div style="display: flex;">
                     <input type="checkbox" onchange="toggleSelect('${bin.uuid}')">
-                    <a class="binId" href="./bin.html?id=${bin.uuid}">${bin.uuid}</a>
+                    <a class="binId" href="./bin.html?id=${bin.uuid}"${titleAttr}>${displayName}</a>
                     <span class="icon" style="font-size: small; margin-left: auto;" data-icon="search_activity">${timeLeft}</span>
                 </div>
                 <div class="${previewClass}" style="padding: .5rem 0">${contentHtml}</div>
@@ -173,7 +169,7 @@ async function refresh() {
         // 刷新后重置选中数量为0
         updateButtonStates();
     } catch (err) {
-        console.error('刷新失败：', err);
+        console.error('Refresh failed:', err);
     }
 }
 
@@ -245,19 +241,38 @@ document.getElementById('select').onclick = function() {
     updateButtonStates();
 };
 
+// 置顶/取消置顶
+async function togglePin(uuid, currentState) {
+    try {
+        const res = await fetch(`${API_BASE}/bins/${uuid}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pinned: !currentState })
+        });
+        if (res.ok) {
+            refresh();
+        } else {
+            alert('Pin toggle failed');
+        }
+    } catch (err) {
+        console.error('Pin toggle failed:', err);
+        alert('Pin toggle failed: ' + err.message);
+    }
+}
+
 // 删除bin
 async function deleteBin(uuid) {
-    if (OurBinSettings.load().confirmOnVoid && !confirm('确定要删除这个bin吗？')) return;
+    if (OurBinSettings.load().confirmOnVoid && !confirm('Delete this bin?')) return;
     try {
         const res = await fetch(`${API_BASE}/bins/${uuid}`, { method: 'DELETE' });
         if (res.ok) {
             refresh();
         } else {
-            alert('删除失败');
+            alert('Delete failed');
         }
     } catch (err) {
-        console.error('删除失败：', err);
-        alert('删除失败：' + err.message);
+        console.error('Delete failed:', err);
+        alert('Delete failed: ' + err.message);
     }
 }
 
@@ -265,7 +280,7 @@ async function deleteBin(uuid) {
 document.getElementById('delete').onclick = async function() {
     const selected = document.querySelectorAll('.bin.selected');
     if (selected.length === 0) return;
-    if (OurBinSettings.load().confirmOnVoid && !confirm(`确定要删除 ${selected.length} 个bin吗？`)) return;
+    if (OurBinSettings.load().confirmOnVoid && !confirm(`Delete ${selected.length} bin(s)?`)) return;
     
     const uuids = Array.from(selected).map(bin => bin.dataset.id);
     try {
@@ -273,11 +288,11 @@ document.getElementById('delete').onclick = async function() {
         if (res.ok) {
             refresh();
         } else {
-            alert('删除失败');
+            alert('Delete failed');
         }
     } catch (err) {
-        console.error('删除失败：', err);
-        alert('删除失败：' + err.message);
+        console.error('Delete failed:', err);
+        alert('Delete failed: ' + err.message);
     }
 };
 
@@ -287,10 +302,10 @@ async function copyBinContent(uuid) {
         const res = await fetch(`${API_BASE}/bins/${uuid}`);
         const bin = await res.json();
         await OurBinClipboard.copy(bin.content);
-        if (OurBinSettings.load().alertOnCopy) alert('已复制到剪贴板');
+        if (OurBinSettings.load().alertOnCopy) alert('Copied to clipboard');
     } catch (err) {
-        console.error('复制失败：', err);
-        alert('复制失败：' + err.message);
+        console.error('Copy failed:', err);
+        alert('Copy failed: ' + err.message);
     }
 }
 
@@ -299,29 +314,35 @@ document.querySelector('button[data-icon="order_approve"]').onclick = async func
     const textarea = document.querySelector('textarea#new');
     const content = textarea.value.trim();
     if (!content) {
-        alert('请输入内容');
+        alert('Please enter content');
         return;
     }
     
     const expiration = document.getElementById('expiration').value;
     // 选项值都是分钟，需要转换为小时
     const expirationHours = expiration === '-1' ? 999999 : parseInt(expiration) / 60;
+    const alias = document.getElementById('new_alias').value.trim();
+    const neverExpires = expiration === '-1';
+    const autoPin = neverExpires && OurBinSettings.load().autoPinNeverExpire;
+    const pinned = document.getElementById('new_pin').checked || autoPin;
     
     try {
         const res = await fetch(`${API_BASE}/bins`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content, expiration_hours: expirationHours })
+            body: JSON.stringify({ content, expiration_hours: expirationHours, alias: alias || null, pinned })
         });
         if (res.ok) {
             textarea.value = '';
+            document.getElementById('new_alias').value = '';
+            document.getElementById('new_pin').checked = false;
             refresh();
         } else {
-            alert('创建失败');
+            alert('Create failed');
         }
     } catch (err) {
-        console.error('创建失败：', err);
-        alert('创建失败：' + err.message);
+        console.error('Create failed:', err);
+        alert('Create failed: ' + err.message);
     }
 };
 
@@ -339,34 +360,34 @@ document.getElementById('renew').onclick = async function() {
         });
         if (res.ok) {
             const data = await res.json();
-            alert(`成功续期 ${data.updated_count} 个bin`);
+            alert(`Renewed ${data.updated_count} bin(s)`);
             refresh();
         } else {
             const error = await res.json();
-            alert('续期失败：' + (error.detail || '未知错误'));
+            alert('Renew failed: ' + (error.detail || 'Unknown error'));
         }
     } catch (err) {
-        console.error('续期失败：', err);
-        alert('续期失败：' + err.message);
+        console.error('Renew failed:', err);
+        alert('Renew failed: ' + err.message);
     }
 };
 
 // 清理已过期的bin
 async function clearBins() {
-    if (!confirm('确定要清理所有已过期的bin吗？此操作不影响前端显示，但会删除数据库中的记录。')) return;
+    if (!confirm('Delete all expired bins from the database?')) return;
     
     try {
         const res = await fetch(`${API_BASE}/bins/cleanup`, { method: 'DELETE' });
         if (res.ok) {
             const data = await res.json();
-            alert(`清理完成，删除了 ${data.deleted_count} 个已过期的bin`);
+            alert(`Cleanup done, ${data.deleted_count} expired bin(s) deleted`);
             refresh();
         } else {
-            alert('清理失败');
+            alert('Cleanup failed');
         }
     } catch (err) {
-        console.error('清理失败：', err);
-        alert('清理失败：' + err.message);
+        console.error('Cleanup failed:', err);
+        alert('Cleanup failed: ' + err.message);
     }
 }
 
@@ -379,14 +400,14 @@ async function resetDB() {
         confirmId += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     
-    const userInput = prompt(`警告：此操作将删除所有数据！\n请输入6位确认ID: ${confirmId}`);
+    const userInput = prompt(`WARNING: This will delete ALL data!\nEnter the 6-character confirmation ID: ${confirmId}`);
     
     if (userInput === null) {
         return; // 用户取消
     }
     
     if (userInput !== confirmId) {
-        alert('确认ID不匹配，操作已取消');
+        alert('Confirmation ID mismatch, operation cancelled');
         return;
     }
     
@@ -394,14 +415,14 @@ async function resetDB() {
         const res = await fetch(`${API_BASE}/bins/reset`, { method: 'DELETE' });
         if (res.ok) {
             const data = await res.json();
-            alert(`数据库已重置，删除了 ${data.deleted_count} 条记录`);
+            alert(`Database reset, ${data.deleted_count} record(s) deleted`);
             refresh();
         } else {
-            alert('重置失败');
+            alert('Reset failed');
         }
     } catch (err) {
-        console.error('重置失败：', err);
-        alert('重置失败：' + err.message);
+        console.error('Reset failed:', err);
+        alert('Reset failed: ' + err.message);
     }
 }
 
